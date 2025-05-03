@@ -26,48 +26,35 @@ from core.utils.bible_data_loader import BibleDataLoader
 
 def resolve_book_name(book_str: str, bible_data: BibleDataLoader, lang_code: str) -> str | None:
     """
-    Resolves a localized, abbreviated, or partial book name to its canonical English key.
+    Resolves user input (abbreviated or alias form) to canonical book ID.
 
     Args:
-        book_str (str): Input book name (e.g. "창", "Genesis", "1Jn")
-        bible_data (BibleDataLoader): Bible metadata loader instance
-        lang_code (str): Language code ("ko", "en", ...)
+        book_str (str): Input like "요삼", "1Jn", "Revelation"
+        bible_data (BibleDataLoader): Loader with alias mappings
+        lang_code (str): Language code (unused in flat alias dict)
 
     Returns:
-        str or None: Canonical English book name (e.g., "Genesis"), or None if not resolved.
+        str or None: Canonical English book ID (e.g. "3 John"), or None if not found
     """
     if not book_str:
         return None
 
-    # Normalize: remove spaces, lowercase, etc.
     query = book_str.strip().lower().replace(" ", "").replace(".", "")
-    standard_book = bible_data.standard_book
 
-    # Try direct match with canonical keys
-    for key in standard_book:
-        if query == key.lower():
-            return key
+    # 1. Flat alias match (e.g., "요삼" → "3John")
+    for alias, canonical in bible_data.aliases_book.items():
+        alias_norm = alias.strip().lower().replace(" ", "").replace(".", "")
+        if query == alias_norm:
+            return canonical
 
-    # Try match against localized and English names
-    for key, names in standard_book.items():
+    # 2. Fallback to standard_book name match (just in case)
+    for key, names in bible_data.standard_book.items():
         name_local = names.get(lang_code, "").strip().lower().replace(" ", "")
         name_en = names.get("en", "").strip().lower().replace(" ", "")
         if query == name_local or query == name_en:
             return key
 
-    # Partial match candidates
-    candidates = []
-    for key, names in standard_book.items():
-        name_local = names.get(lang_code, "").strip().lower().replace(" ", "")
-        name_en = names.get("en", "").strip().lower().replace(" ", "")
-        if name_local.startswith(query) or name_en.startswith(query):
-            candidates.append(key)
-
-    if len(candidates) == 1:
-        return candidates[0]
-
     return None
-
 
 def normalize_book_name(book_text, bible_data, lang_code="ko"):
     """
