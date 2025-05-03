@@ -65,3 +65,4 @@ data/
 
 # Benjamin J. C private
 auto_release.py
+build_and_stage_release.py

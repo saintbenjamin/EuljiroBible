@@ -1,0 +1,14 @@
+{
+    "대한민국 개역한글 (1961)": "KRV",
+    "히브리어 구약 Westminster Leningrad Codex (1008)": "Hebrew_WLC",
+    "그리스어 신약 Textus Receptus (1884)": "Greek_TR",
+    "라틴어 Latin Vulgate (405)": "Latin_VUL",
+    "영어 American Standard Version (1901)": "ASV",
+    "영어 King James Version (1611)": "KJV",
+    "유럽_독일어 Lutherbibel (1545)": "German_LUT1545",
+    "유럽_프랑스어 Louis Segond (1910)": "French_LSG",
+    "아시아_일본어 口語訳 (1955)": "Japanese_KOU",
+    "아시아_일본어 文語訳 (1887)": "Japanese_BUN",
+    "아시아_중국어 简体和合本 (1919)": "Chinese_CUV",
+    "아시아_중국어 繁體和合本 (1919)": "Chinese_CUV-T"
+}

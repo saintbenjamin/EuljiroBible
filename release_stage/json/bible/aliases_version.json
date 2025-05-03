@@ -1,0 +1,14 @@
+{
+    "대한민국 개역한글 (1961)": "개역한글",
+    "히브리어 구약 Westminster Leningrad Codex (1008)": "히브리어_WLC",
+    "그리스어 신약 Textus Receptus (1884)": "그리스어_TRGNT",
+    "라틴어 Latin Vulgate (405)": "라틴어_Vulgate",
+    "영어 American Standard Version (1901)": "영어_ASV",
+    "영어 King James Version (1611)": "영어_KJV",
+    "유럽_독일어 Lutherbibel (1545)": "독일어_Luther1545",
+    "유럽_프랑스어 Louis Segond (1910)": "프랑스어_Segond",
+    "아시아_일본어 口語訳 (1955)": "일본어_口語訳",
+    "아시아_일본어 文語訳 (1887)": "일본어_文語訳",
+    "아시아_중국어 简体和合本 (1919)": "중국어_和合本",
+    "아시아_중국어 繁體和合本 (1919)": "중국어_和合本繁"
+}
