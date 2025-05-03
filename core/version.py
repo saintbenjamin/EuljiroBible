@@ -12,7 +12,7 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
-APP_VERSION = "2.0.2"
+APP_VERSION = "2.0.3"
 """
 str: Current application version string.
 

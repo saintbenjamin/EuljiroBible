@@ -36,6 +36,7 @@ import platform
 if getattr(sys, 'frozen', False):
     # Running from a PyInstaller-built executable
     BASE_DIR = os.path.dirname(sys.executable)
+    RESOURCE_DIR = sys._MEIPASS
 else:
     script_path = os.path.abspath(sys.argv[0])
 
@@ -45,10 +46,11 @@ else:
     else:
         # Running from source (e.g., gui/gui_main.py or cli/cli_main.py)
         BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(script_path)))
+    RESOURCE_DIR = BASE_DIR 
 
 # Determine the icon resource directory
 ICON_DIR = os.path.join(
-    BASE_DIR, "gui", "resources",
+    RESOURCE_DIR, "gui", "resources",
     "icons" if platform.system() == "Windows" else "svg"
 )
 
