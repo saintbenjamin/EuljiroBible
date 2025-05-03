@@ -55,3 +55,13 @@ Thumbs.db
 settings.json
 *.log
 verse_output.txt
+
+# Temporary backup of full Bible data during release
+data_backup/
+data_public/
+
+# Do not commit private full-version Bible data
+data/
+
+# Benjamin J. C private
+auto_release.py
