@@ -55,3 +55,10 @@ Thumbs.db
 settings.json
 *.log
 verse_output.txt
+
+# Benjamin's private
+data/
+data_public/
+data_backup/
+build_and_stage_release.py
+auto_release.py
