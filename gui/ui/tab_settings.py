@@ -487,14 +487,6 @@ class TabSettings(QWidget):
         if self.overlay:
             apply_overlay_font(self.overlay, self.settings)
 
-        # Reload settings into the main window and refresh all tabs
-        window_main = find_window_main(self)
-        if window_main:
-            window_main.settings = ConfigManager.load()
-            refresh_main_tabs(window_main)
-            verse_tab = window_main.tabs.widget(0)
-            verse_tab.refresh_checkbox_fonts()
-
     def apply_font_to_children(self, widget, font):
         """
         Recursively applies the font to all child widgets.

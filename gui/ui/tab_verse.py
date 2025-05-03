@@ -358,13 +358,8 @@ class TabVerse(QWidget):
         checkbox = create_checkbox(label, callback=self.update_version_summary)
         checkbox.version_key = version_name
         checkbox.setToolTip(version_name)
+        checkbox.setEnabled(True)    
 
-        if version_name not in self.bible_data.data:
-            font = checkbox.font()
-            font.setItalic(True)
-            checkbox.setFont(font)
-            checkbox.setStyleSheet("color: gray;")
-        
         return checkbox
 
     def update_grid_layout(self):
@@ -384,49 +379,6 @@ class TabVerse(QWidget):
 
         for idx, checkbox in enumerate(self.version_widget.findChildren(QCheckBox)):
             self.version_layout.addWidget(checkbox, idx // columns, idx % columns)
-
-    def update_checkbox_style(self, checkbox):
-        """
-        Updates font style and color of the version checkbox based on:
-        - whether it's selected
-        - whether the version data is available
-        """
-        version = checkbox.version_key
-
-        font_family = self.settings.get("font_family", "Arial")
-        font_size = int(self.settings.get("font_size", 12))
-        font_weight = int(self.settings.get("font_weight", QFont.Weight.Normal.value))
-        is_italic = False
-        color = "black"
-
-        if checkbox.isChecked():
-            is_italic = False
-            color = "white" if QApplication.instance().styleSheet() else "black"
-        else:
-            if version not in self.bible_data.data:
-                is_italic = True
-                color = "gray"
-            else:
-                is_italic = False
-                color = "white" if QApplication.instance().styleSheet() else "black"
-
-        style = (
-            f"QCheckBox {{"
-            f"font-family: '{font_family}';"
-            f"font-size: {font_size}pt;"
-            f"font-weight: {font_weight};"
-            f"font-style: {'italic' if is_italic else 'normal'};"
-            f"color: {color};"
-            f"}}"
-        )
-        font = checkbox.font()
-        font.setPointSize(font_size)
-        font.setWeight(QFont.Weight(font_weight))
-        checkbox.setFont(font)
-        checkbox.setStyleSheet(style)
-        checkbox.style().unpolish(checkbox)
-        checkbox.style().polish(checkbox)
-        checkbox.update()
 
     def update_version_summary(self):
         """
@@ -450,11 +402,6 @@ class TabVerse(QWidget):
         if not getattr(self, "initializing", False):
             self.update_book_dropdown()
 
-        for i in range(self.version_layout.count()):
-            widget = self.version_layout.itemAt(i).widget()
-            if isinstance(widget, QCheckBox):
-                self.update_checkbox_style(widget)
-
         for v in selected_versions:
             try:
                 if v not in loaded_versions:
@@ -465,25 +412,6 @@ class TabVerse(QWidget):
                 QMessageBox.critical(self,
                     self.tr("error_loading_title"),
                     self.tr("error_loading_msg").format(v, e))
-
-    def refresh_checkbox_fonts(self):
-        """
-        Refreshes the font and style (italic, color) of all version checkboxes.
-        Keeps version-specific styling (e.g., unavailable = italic + gray).
-        """
-        from PySide6.QtGui import QFont
-
-        for i in range(self.version_layout.count()):
-            widget = self.version_layout.itemAt(i).widget()
-            if isinstance(widget, QCheckBox):
-                font = widget.font()
-                font.setFamily(self.settings.get("font_family", font.family()))
-                font.setPointSize(int(self.settings.get("font_size", font.pointSize())))
-                weight_val = int(self.settings.get("font_weight", font.weight().value))
-                font.setWeight(QFont.Weight(weight_val))
-                widget.setFont(font)
-
-                self.update_checkbox_style(widget)
 
     def update_button_layout(self):
         """
