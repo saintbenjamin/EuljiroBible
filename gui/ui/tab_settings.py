@@ -445,10 +445,6 @@ class TabSettings(QWidget):
                 self.tr("error_set_saving_msg").format(e),
             )
 
-        window_main = self.window()
-        tab_verse = window_main.tabs.widget(0)
-        refresh_checkboxes(tab_verse)
-
     def apply_dynamic_settings(self):
         """
         Applies font, overlay, style settings, and updates button visibility dynamically.
@@ -486,6 +482,12 @@ class TabSettings(QWidget):
         # Reapply font to overlay if visible
         if self.overlay:
             apply_overlay_font(self.overlay, self.settings)
+
+        # Reload settings into the main window and refresh all tabs
+        window_main = find_window_main(self)
+        if window_main:
+            window_main.settings = ConfigManager.load()
+            refresh_main_tabs(window_main)
 
     def apply_font_to_children(self, widget, font):
         """
