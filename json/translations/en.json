@@ -70,6 +70,7 @@
   "warn_version_msg": "Please select at least one Bible version.",
   "warn_common_book_title": "No Common Books",
   "warn_common_book_msg": "Selected versions have no common books.",
+  "warn_book_not_in_versions_msg": "The selected book is not available in the chosen Bible versions. Defaulted to the first common book.",
   "warning_single_display_title": "Single Display Detected",
   "warning_single_display_msg": "Only one display is detected. Do you still want to launch the overlay?",
   "error_verse_not_found": "Verse not found: {}",

@@ -269,7 +269,12 @@ class TabVerse(QWidget):
 
     def update_book_dropdown(self, lang_code=None):
         """
-        Updates the book dropdown to match selected versions (clean version).
+        Updates the book dropdown to match selected versions.
+        Handles:
+        - No version selected → skip with no warning
+        - No common books → clear + warning
+        - Previously selected book no longer available → fallback + warning
+        - Empty previous state → fallback with no warning
         """
         if getattr(self, "initializing", False):
             return
@@ -278,12 +283,36 @@ class TabVerse(QWidget):
             lang_code = "en" if self.tr("menu_lang") == "Language" else "ko"
 
         versions = self.get_selected_versions()
-        common_books = self.get_common_books()
-        versions, common_books = self.validate_selection()
-        if not versions or not common_books:
+
+        # ✅ Case 1: No versions selected at all — silent clear
+        if not versions:
+            self.book_combo.blockSignals(True)
+            self.book_combo.clear()
+            self.book_combo.blockSignals(False)
+            self.chapter_input.clear()
+            self.verse_input.clear()
             return
 
-        current_book_eng = compact_book_id(self.book_combo.currentText().strip())
+        common_books = self.get_common_books()
+        versions, common_books = self.validate_selection()
+
+        # ✅ Case 2: Versions selected but no common books
+        if not common_books:
+            self.book_combo.blockSignals(True)
+            self.book_combo.clear()
+            self.book_combo.blockSignals(False)
+            self.chapter_input.clear()
+            self.verse_input.clear()
+            QMessageBox.warning(
+                self,
+                self.tr("warn_common_book_title"),
+                self.tr("warn_common_book_msg")
+            )
+            return
+
+        # ✅ Preserve current input before clearing UI
+        current_display_text = self.book_combo.currentText().strip()
+        current_book_eng = resolve_book_name(current_display_text, self.bible_data, lang_code)
         current_chapter = self.chapter_input.currentText().strip()
         current_verse = self.verse_input.text().strip()
 
@@ -296,16 +325,29 @@ class TabVerse(QWidget):
 
         self.book_combo.blockSignals(False)
 
+        # ✅ Case 3: Restore previously selected book if still valid
+        found = False
         for i in range(self.book_combo.count()):
             if self.book_combo.itemData(i) == current_book_eng:
                 self.book_combo.setCurrentIndex(i)
+                found = True
                 break
-        else:
-            self.book_combo.setCurrentIndex(0)
 
+        # ✅ Case 4: Not found → fallback + warning only if previously set
+        if not found:
+            self.book_combo.setCurrentIndex(0)
+            if current_display_text:
+                QMessageBox.warning(
+                    self,
+                    self.tr("warn_common_book_title"),
+                    self.tr("warn_book_not_in_versions_msg")
+                )
+
+        # ✅ Restore chapter/verse input
         self.update_chapter_dropdown()
         self.chapter_input.setCurrentText(current_chapter)
         self.verse_input.setText(current_verse)
+
 
     def update_chapter_dropdown(self):
         """
@@ -382,7 +424,7 @@ class TabVerse(QWidget):
 
     def update_version_summary(self):
         """
-        Updates the selected version summary label.
+        Updates the selected version summary label and refreshes the book dropdown.
         """
         if getattr(self, "initializing", False):
             return
@@ -396,11 +438,19 @@ class TabVerse(QWidget):
                 summary = ", ".join(selected_versions)
         else:
             summary = self.tr("msg_nothing")
+            QMessageBox.warning(
+                self,
+                self.tr("warn_version_title"),
+                self.tr("warn_version_msg")
+            )
+            self.book_combo.clear()
+            self.chapter_input.clear()
+            self.verse_input.clear()
+            return
 
         self.version_summary_label.setText(summary)
 
-        if not getattr(self, "initializing", False):
-            self.update_book_dropdown()
+        self.update_book_dropdown()
 
         for v in selected_versions:
             try:
@@ -412,6 +462,7 @@ class TabVerse(QWidget):
                 QMessageBox.critical(self,
                     self.tr("error_loading_title"),
                     self.tr("error_loading_msg").format(v, e))
+
 
     def update_button_layout(self):
         """
@@ -628,12 +679,13 @@ class TabVerse(QWidget):
         all_books = list(self.bible_data.standard_book.keys())
         return [b for b in all_books if b in common_books]
 
+
     def validate_selection(self):
         """
         Validates that versions and common books are available.
 
         Returns:
-            tuple: (versions, common_books) or (None, None) if invalid.
+            tuple: (versions, common_books), or (None, None) if invalid.
         """
         from core.logic.verse_logic import validate_versions_and_books
 
@@ -643,20 +695,7 @@ class TabVerse(QWidget):
         versions = self.get_selected_versions()
         validated_versions, common_books = validate_versions_and_books(versions, self.bible_data)
 
-        if validated_versions is None:
-            QMessageBox.warning(self, 
-                self.tr("warn_version_title"), 
-                self.tr("warn_version_msg"))
-            return None, None
-
-        if not common_books:
-            QMessageBox.warning(self, 
-                self.tr("warn_common_book_title"), 
-                self.tr("warn_common_book_msg"))
-            return versions, None
-
         return validated_versions, common_books
-
 
     def set_loading_state(self, loading):
         """

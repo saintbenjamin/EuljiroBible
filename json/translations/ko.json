@@ -70,6 +70,7 @@
   "warn_version_msg": "성경 버전을 하나 이상 선택해 주세요.",
   "warn_common_book_title": "공통 권 없음",
   "warn_common_book_msg": "선택된 버전 사이에 공통된 권이 없습니다.",
+  "warn_book_not_in_versions_msg": "현재 선택한 권은 선택한 성경들에 존재하지 않습니다. 첫 번째 공통 권으로 변경됩니다.",
   "warning_single_display_title": "디스플레이가 1개입니다",
   "warning_single_display_msg": "현재 디스플레이가 1개뿐입니다. 오버레이를 실행하시겠습니까?",
   "error_verse_not_found": "구절을 찾을 수 없습니다: {}",
