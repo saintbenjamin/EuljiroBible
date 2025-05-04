@@ -5,7 +5,7 @@ description = "Command-line Bible search tool with multi-version support"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
-    { name = "Benjamin Jaedon Choi", email = "euljirochurch [at] gmail [dot] com" }
+    { name = "Benjamin Jaedon Choi", email = "euljirochurch@gmail.com" }
 ]
 license = "MIT"
 

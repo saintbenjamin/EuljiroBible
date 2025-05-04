@@ -32,21 +32,26 @@ import os
 import sys
 import platform
 
-# Determine BASE_DIR based on execution context
+import os
+import sys
+
+# Determine BASE_DIR depending on execution context
 if getattr(sys, 'frozen', False):
-    # Running from a PyInstaller-built executable
+    # Case 1: PyInstaller-built executable
     BASE_DIR = os.path.dirname(sys.executable)
     RESOURCE_DIR = sys._MEIPASS
 else:
-    script_path = os.path.abspath(sys.argv[0])
+    # Case 2: Source or editable install (CLI or GUI)
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-    if any(x in script_path for x in ["site-packages", "Scripts", "bin"]):
-        # Likely running as an installed package or from a virtual environment
-        BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-    else:
-        # Running from source (e.g., gui/gui_main.py or cli/cli_main.py)
-        BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(script_path)))
-    RESOURCE_DIR = BASE_DIR 
+    # Climb up until project root is found (has 'core/' inside it)
+    while not os.path.isdir(os.path.join(BASE_DIR, "core")):
+        parent = os.path.dirname(BASE_DIR)
+        if parent == BASE_DIR:
+            break  # Reached root → give up
+        BASE_DIR = parent
+
+    RESOURCE_DIR = BASE_DIR
 
 # Determine the icon resource directory
 ICON_DIR = os.path.join(
