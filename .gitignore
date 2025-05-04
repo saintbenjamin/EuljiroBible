@@ -60,8 +60,10 @@ verse_output.txt
 data/
 data_public/
 json/
-json_private/
+json_public/
 data_backup/
 release_stage/
 build_and_stage_release.py
 auto_release.py
+_internal/
+EuljiroBible.exe
