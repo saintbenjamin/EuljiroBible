@@ -52,13 +52,14 @@ Thumbs.db
 *.local
 
 # EuljiroBible specific
-settings.json
+/settings.json
 *.log
 verse_output.txt
 
 # Benjamin's private
 data/
 data_public/
+json_public/
 data_backup/
 release_stage/
 build_and_stage_release.py

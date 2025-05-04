@@ -1,0 +1,26 @@
+{
+  "last_language": "en",
+  "font_family": "Arial",
+  "font_size": 12,
+  "dark_mode": false,
+  "last_versions": [
+    "영어 King James Version (1611)"
+  ],
+  "last_book": "Genesis",
+  "last_chapter": 1,
+  "last_verse": "1",
+  "display_font_family": "Arial",
+  "display_font_size": 12,
+  "display_text_color": "#ffffff",
+  "display_bg_color": "#000000",
+  "display_bg_alpha": 0.91,
+  "display_overlay_mode": "resizable",
+  "display_index": 0,
+  "auto_overlay_on_fill": true,
+  "always_show_on_off_buttons": false,
+  "output_path": "verse_output.txt",
+  "poll_enabled": false,
+  "poll_interval": 500,
+  "font_weight": 400,
+  "display_font_weight": 400
+}
