@@ -18,15 +18,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import ( 
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, 
     QComboBox, QTextEdit, QMessageBox, QScrollArea, QGridLayout, QCheckBox, 
-    QSplitter, QApplication
+    QSplitter
 )
-from PySide6.QtGui import QTextBlockFormat, QStandardItemModel, QFont
+from PySide6.QtGui import QTextBlockFormat, QStandardItemModel
 
 from core.logic.verse_logic import display_verse_logic
-from core.store.storage import loaded_versions
 from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.logger import log_debug
-from core.utils.utils_bible import get_max_verse, resolve_book_name, compact_book_id
+from core.utils.utils_bible import resolve_book_name
 from core.utils.utils_output import save_to_files
 from gui.ui.common import create_checkbox, create_svg_text_button, LoadingIndicator
 from gui.ui.locale.message_loader import load_messages
@@ -454,9 +453,7 @@ class TabVerse(QWidget):
 
         for v in selected_versions:
             try:
-                if v not in loaded_versions:
-                    loaded_versions.append(v)
-                    log_debug(f"[TabVerse] selected versions: {self.get_selected_versions()}")
+                log_debug(f"[TabVerse] selected versions: {self.get_selected_versions()}")
             except Exception as e:
                 log_error_with_dialog(e)
                 QMessageBox.critical(self,
@@ -618,7 +615,7 @@ class TabVerse(QWidget):
                 return
 
             current = verse_range[0]
-            max_verse = get_max_verse(version, book, chapter)
+            max_verse = self.bible_data.get_max_verse(version, book, chapter)
             if max_verse == 0:
                 QMessageBox.warning(self, 
                     self.tr("warn_no_chapter_title"), 

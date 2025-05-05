@@ -12,7 +12,6 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
-from PySide6.QtWidgets import QApplication
 from gui.ui.window_main import WindowMain
 
 def find_window_main(widget):

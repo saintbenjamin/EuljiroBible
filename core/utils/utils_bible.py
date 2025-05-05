@@ -16,13 +16,8 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
-import os
 import re
-import json
-from core.config import paths
-from core.store.storage import bible_map, loaded_versions
 from core.utils.bible_data_loader import BibleDataLoader
-
 
 def resolve_book_name(book_str: str, bible_data: BibleDataLoader, lang_code: str) -> str | None:
     """
@@ -72,56 +67,6 @@ def normalize_book_name(book_text, bible_data, lang_code="ko"):
         if names.get(lang_code, "").strip() == book_text.strip():
             return eng_key
     return book_text
-
-
-def load_all_versions(json_dir="BIBLE_DATA_DIR", target_versions=None):
-    """
-    Loads all or selected Bible versions into memory from disk.
-
-    Args:
-        json_dir (str): Path to directory containing .json Bible files.
-        target_versions (list, optional): List of versions to load selectively.
-    """
-    global bible_map, loaded_versions
-    json_dir = paths.BIBLE_DATA_DIR
-
-    # Clear existing data only if full reload
-    if target_versions is None:
-        bible_map.clear()
-        loaded_versions.clear()
-
-    # Iterate over JSON files
-    for fname in os.listdir(json_dir):
-        if fname.endswith(".json"):
-            version = fname.replace(".json", "")
-            if target_versions and version not in target_versions:
-                continue
-            with open(os.path.join(json_dir, fname), encoding="utf-8") as f:
-                bible_map[version] = json.load(f)
-                if version not in loaded_versions:
-                    loaded_versions.append(version)
-
-    loaded_versions.sort()
-
-
-def get_max_verse(version, book, chapter):
-    """
-    Returns the maximum verse number for the given version/book/chapter.
-
-    Args:
-        version (str): Bible version
-        book (str): Book name
-        chapter (int | str): Chapter number
-
-    Returns:
-        int: Maximum verse number, or 0 if not found
-    """
-    chapter_str = str(chapter)
-    if chapter_str not in bible_map[version][book]:
-        return 0
-    verses = bible_map[version][book][chapter_str]
-    return max(map(int, verses.keys()), default=0)
-
 
 def search_keywords(bible_data: BibleDataLoader, version: str, keywords: list[str]) -> list[dict]:
     """

@@ -16,8 +16,9 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
+from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.utils_output import format_output
-from core.utils.utils_bible import resolve_book_name, get_max_verse
+from core.utils.utils_bible import resolve_book_name
 
 def parse_verse_range(verse_text, version, book, chapter, bible_data):
     """
@@ -39,10 +40,10 @@ def parse_verse_range(verse_text, version, book, chapter, bible_data):
         ValueError: If the format is invalid or range is reversed.
     """
     verse_text = verse_text.strip()
-
+    bible_data = BibleDataLoader()
     if not verse_text:
         # Empty input means: show entire chapter
-        max_verse = get_max_verse(version, book, chapter)
+        max_verse = bible_data.get_max_verse(version, book, chapter)
         return (1, max_verse)
 
     if "-" in verse_text:

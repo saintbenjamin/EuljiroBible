@@ -21,7 +21,6 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from core.config import paths
-from core.store import storage
 from core.utils.logger import log_debug
 from core.version import APP_VERSION
 from gui.launch import launch
@@ -60,7 +59,6 @@ def run_gui():
         verify_bible_data()
 
         # Initialize version list and load user settings
-        storage.VERSION_LIST.clear()
         version_list = []
         settings = ConfigManager.load()
 

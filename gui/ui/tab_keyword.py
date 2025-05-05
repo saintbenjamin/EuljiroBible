@@ -18,7 +18,6 @@ from PySide6.QtWidgets import (
     QTextEdit, QMessageBox, QSizePolicy, QTableWidget, QSplitter, QTableWidgetItem
 )
 
-from core.store.storage import loaded_versions
 from core.utils.utils_bible import (
     search_keywords, keyword_counts
 )
@@ -143,10 +142,6 @@ class TabKeyword(QWidget):
         log_debug("[TabKeyword] run_search started")
         version = self.version_box.currentText()
         keywords = self.keyword_input.text().strip().split()
-
-        # Ensure the version is loaded into memory
-        if version not in loaded_versions:
-            loaded_versions.append(version)
 
         # Validate keyword input
         if not keywords or all(k == "" for k in keywords):

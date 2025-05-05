@@ -13,7 +13,6 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
 import qdarkstyle
-from PySide6.QtWidgets import QCheckBox
 
 def set_dark_mode(app, enable: bool):
     """

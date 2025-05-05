@@ -17,8 +17,7 @@ import platform
 from PySide6.QtWidgets import QCheckBox
 from PySide6.QtGui import QFont, QIcon, QPalette
 
-from core.store.storage import bible_map, loaded_versions
-from core.utils.utils_bible import load_all_versions
+from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.utils_version import refresh_full_version_list
 from gui.config.config_manager import ConfigManager
 from gui.utils.utils_theme import set_dark_mode
@@ -38,16 +37,15 @@ def launch(app, saved_versions, settings, app_version):
         WindowMain: The main application window instance.
     """
     from gui.ui.window_main import WindowMain
-    global bible_map, loaded_versions
 
     # Get all version strings (sorted and alias-resolved)
     version_list = refresh_full_version_list()
-    loaded_versions = []
 
     saved_versions = settings.get("last_versions", ["대한민국 개역개정 (1998)"])
 
     # Load only versions used last session (lazy load)
-    load_all_versions(target_versions=saved_versions)
+    bible_loader = BibleDataLoader()
+    bible_loader.load_versions(saved_versions)
 
     # Set platform-specific icon (ICO for Windows, SVG otherwise)
     if platform.system() == "Windows":

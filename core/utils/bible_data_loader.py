@@ -136,6 +136,29 @@ class BibleDataLoader:
             print(f"[ERROR] Failed to load version {version_key}: {e}")
             self.data[version_key] = {}
 
+    def load_versions(self, target_versions=None):
+        if target_versions is None:
+            self.data.clear()
+            target_versions = [
+                fname.replace(".json", "")
+                for fname in os.listdir(self.text_dir)
+                if fname.endswith(".json")
+            ]
+        for v in target_versions:
+            self.load_version(v)
+
+    def get_max_verse(self, version, book, chapter):
+        version_data = self.data.get(version)
+        if not version_data:
+            return 0
+        book_data = version_data.get(book)
+        if not book_data:
+            return 0
+        chapter_data = book_data.get(str(chapter))
+        if not chapter_data:
+            return 0
+        return max(map(int, chapter_data.keys()), default=0)
+
     def extract_verses(self, versions, book, chapter, verse_range):
         """
         Extracts specific verses across multiple versions for given book/chapter/range.

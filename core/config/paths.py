@@ -32,9 +32,6 @@ import os
 import sys
 import platform
 
-import os
-import sys
-
 # Determine BASE_DIR depending on execution context
 if getattr(sys, 'frozen', False):
     # Case 1: PyInstaller-built executable

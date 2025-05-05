@@ -13,7 +13,6 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
 from PySide6.QtWidgets import QFileDialog, QColorDialog
-
 from gui.config.config_manager import ConfigManager
 
 def set_color_from_dialog(button, setting_key, callback=None):
