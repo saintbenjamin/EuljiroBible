@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QApplication, QSlider, QPushButton
 )
 from PySide6.QtGui import QFont
+from PySide6.QtCore import QCoreApplication
 
 # Core utilities
 from core.utils.file_helpers import should_show_overlay
@@ -568,18 +569,23 @@ class TabSettings(QWidget):
                 other_screens = [s for s in screens if s != main_screen]
                 target_geometry = other_screens[0].geometry()
             else:
-                # Ask user for confirmation on single-display setup
+                # Ask user for confirmation on single-display setup, but only once
                 log_debug("[TabSettings] about to ask single-display warning")
-                reply = QMessageBox.question(
-                    self,
-                    self.tr("warning_single_display_title"),
-                    self.tr("warning_single_display_msg"),
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                if reply != QMessageBox.Yes:
-                    log_debug("[TabSettings] User cancelled overlay due to single screen.")
-                    self.overlay_denied = True
-                    return
+                app = QCoreApplication.instance()
+                if not app.property("warned_display_once"):
+                    reply = QMessageBox.question(
+                        self,
+                        self.tr("warning_single_display_title"),
+                        self.tr("warning_single_display_msg"),
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    app.setProperty("warned_display_once", True)
+
+                    if reply != QMessageBox.Yes:
+                        log_debug("[TabSettings] User cancelled overlay due to single screen.")
+                        self.overlay_denied = True
+                        return
+
                 target_geometry = screens[0].geometry()
         else:
             # Resizable overlay: use selected screen index or fallback to primary screen
