@@ -172,12 +172,3 @@ class LoadingIndicator(QWidget):
                 self.width(),
                 self.height()
             )
-
-    def center_in_parent(self):
-        """
-        Repositions the indicator to be centered manually.
-        """
-        if self.parent():
-            pw, ph = self.parent().width(), self.parent().height()
-            sw, sh = self.width(), self.height()
-            self.move((pw - sw) // 2, (ph - sh) // 2)

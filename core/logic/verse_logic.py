@@ -62,38 +62,6 @@ def parse_verse_range(verse_text, version, book, chapter, bible_data):
         except ValueError:
             raise ValueError("invalid_verse_format")
 
-
-def format_verse_text(versions, book, chapter, verse_range, tr, lang_code, bible_data, for_whitebox=False):
-    """
-    Retrieves and formats verses for output (GUI or CLI).
-
-    Args:
-        versions (list): List of Bible version keys.
-        book (str): Book key.
-        chapter (int): Chapter number.
-        verse_range (tuple[int, int]): Start and end verse.
-        tr (function): Translation function.
-        lang_code (str): "ko", "en", etc.
-        bible_data (BibleDataLoader): Loader instance.
-        for_whitebox (bool): True if output is for overlay.
-
-    Returns:
-        str: Formatted string for display or saving.
-    """
-    verses_dict = {v: bible_data.get_verses(v) for v in versions}
-    return format_output(
-        versions,
-        book,
-        chapter,
-        verse_range,
-        verses_dict,
-        tr,
-        for_whitebox=for_whitebox,
-        lang_code=lang_code,
-        bible_data=bible_data,
-    )
-
-
 def shift_verse_value(current_verse: int, delta: int, max_verse: int) -> int:
     """
     Computes a new verse number by applying delta with bounds.

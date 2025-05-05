@@ -51,7 +51,7 @@ from gui.utils.utils_dialog import get_save_path, set_color_from_dialog
 # Display/font/theme/window helpers
 from gui.utils.utils_display import get_display_descriptions
 from gui.utils.utils_fonts import apply_main_font_to_app, apply_overlay_font
-from gui.utils.utils_theme import set_dark_mode, refresh_checkboxes, refresh_main_tabs
+from gui.utils.utils_theme import set_dark_mode, refresh_main_tabs
 from gui.utils.utils_window import find_window_main
 
 class TabSettings(QWidget):

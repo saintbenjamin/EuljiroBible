@@ -193,31 +193,3 @@ def compact_book_id(name: str) -> str:
         str: Compact ID (e.g. "1John")
     """
     return re.sub(r"\s+", "", name)
-
-
-def get_display_name(book_key: str, lang_code: str, alias_map: dict = None) -> str:
-    """
-    Returns the preferred display alias for a book in given language.
-
-    Args:
-        book_key (str): Canonical book ID (e.g. "1John")
-        lang_code (str): Language code ("ko", "en", ...)
-        alias_map (dict, optional): Pre-loaded alias mapping
-
-    Returns:
-        str: Best-matching alias or book key fallback
-    """
-    if alias_map is None:
-        from core.utils.alias_loader import load_aliases
-        alias_map = load_aliases()
-
-    aliases = alias_map.get(book_key, [])
-    if not aliases:
-        return book_key
-
-    # Prefer longest for English (e.g. "1 John" over "1Jn")
-    if lang_code == "en":
-        aliases_sorted = sorted(aliases, key=lambda a: (-len(a), a.lower()))
-        return aliases_sorted[0]
-    else:
-        return aliases[0]

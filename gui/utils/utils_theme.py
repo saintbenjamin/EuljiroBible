@@ -28,18 +28,6 @@ def set_dark_mode(app, enable: bool):
     else:
         app.setStyleSheet("")
 
-def refresh_checkboxes(tab_verse):
-    """
-    Refreshes the style of all checkboxes in the verse tab.
-
-    Args:
-        tab_verse (QWidget): The verse tab containing checkboxes.
-    """
-    for i in range(tab_verse.version_layout.count()):
-        checkbox = tab_verse.version_layout.itemAt(i).widget()
-        if isinstance(checkbox, QCheckBox):
-            tab_verse.update_checkbox_style(checkbox)
-
 def refresh_main_tabs(window_main):
     """
     Refreshes layout or visibility of UI components in verse/keyword/settings tabs.

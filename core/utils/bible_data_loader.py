@@ -95,19 +95,6 @@ class BibleDataLoader:
             print(f"[Warning] Failed to load {file_path}: {e}")
             return {}
 
-    def get_aliases_book(self, data, lang_code):
-        """
-        Gets localized book name from book alias data.
-
-        Args:
-            data (str): Canonical book ID
-            lang_code (str): Language code ("en", "ko", etc.)
-
-        Returns:
-            str: Localized display name or fallback to original input
-        """
-        return self.aliases_book.get(data, {}).get(lang_code, data)
-
     def get_standard_book(self, book_id: str, lang_code: str) -> str:
         """
         Returns localized canonical book name from internal ID.
@@ -124,6 +111,7 @@ class BibleDataLoader:
     def get_sort_key(self):
         """
         Returns a key function for sorting version names by region prefix.
+        Required by GUI and CLI sorting logic. DO NOT DELETE.
 
         Returns:
             function: Sort key callable for use with sorted()
@@ -239,16 +227,3 @@ class BibleDataLoader:
             else:
                 alias_map[k] = v
         return alias_map
-
-    def get_book_display_name(self, book_id: str, lang_code="ko") -> str:
-        """
-        Returns display name of a book in the specified language.
-
-        Args:
-            book_id (str): Canonical book ID
-            lang_code (str): Language code
-
-        Returns:
-            str: Localized display name or original ID as fallback
-        """
-        return self.standard_book.get(book_id, {}).get(lang_code, book_id)

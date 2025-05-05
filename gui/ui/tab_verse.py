@@ -697,26 +697,6 @@ class TabVerse(QWidget):
 
         return validated_versions, common_books
 
-    def set_loading_state(self, loading):
-        """
-        Enables/disables UI controls during loading.
-
-        Args:
-            loading (bool): True if loading.
-        """
-        for i in range(self.version_layout.count()):
-            widget = self.version_layout.itemAt(i).widget()
-            if isinstance(widget, QCheckBox):
-                widget.setEnabled(not loading)
-        self.book_combo.setEnabled(not loading)
-        self.chapter_input.setEnabled(not loading)
-        self.verse_input.setEnabled(not loading)
-        self.search_btn.setEnabled(not loading)
-        self.save_btn.setEnabled(not loading)
-        self.prev_verse_btn.setEnabled(not loading)
-        self.next_verse_btn.setEnabled(not loading)
-        self.clear_display_btn.setEnabled(not loading)
-
     def clear_outputs(self):
         """
         Clears the display box and output file.
