@@ -200,8 +200,9 @@ def resolve_output_path(settings, key="output_path"):
 
 def save_to_files(merged, settings, parent=None):
     """
-    Saves final merged text to disk using atomic write strategy.
-    If saving fails, shows error dialog in GUI or logs in CLI.
+    Saves the final merged text to disk using an atomic write strategy.
+    Ensures the file's modified timestamp is updated so that external
+    listeners (e.g., slide interruptor) can detect the change.
 
     Args:
         merged (str): Final display text to save.
@@ -211,7 +212,12 @@ def save_to_files(merged, settings, parent=None):
     output_path = resolve_output_path(settings)
 
     try:
+        # Write content to disk atomically
         atomic_write(output_path, merged)
+
+        # Force modified time update to trigger file system watchers
+        os.utime(output_path, None)
+
     except Exception as e:
         if parent:
             from PySide6.QtWidgets import QMessageBox
