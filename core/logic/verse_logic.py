@@ -16,7 +16,6 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
-from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.utils_output import format_output
 from core.utils.utils_bible import resolve_book_name
 
@@ -40,11 +39,10 @@ def parse_verse_range(verse_text, version, book, chapter, bible_data):
         ValueError: If the format is invalid or range is reversed.
     """
     verse_text = verse_text.strip()
-    bible_data = BibleDataLoader()
     if not verse_text:
         # Empty input means: show entire chapter
         max_verse = bible_data.get_max_verse(version, book, chapter)
-        return (1, max_verse)
+        return (1, max_verse), None
 
     if "-" in verse_text:
         try:
@@ -53,13 +51,18 @@ def parse_verse_range(verse_text, version, book, chapter, bible_data):
             end = int(end.strip())
             if start > end:
                 raise ValueError("invalid_verse_range")
-            return (start, end)
+
+            max_verse = bible_data.get_max_verse(version, book, chapter)
+            if end > max_verse:
+                return (start, max_verse), f"{book} {chapter}장은 {max_verse}절까지만 존재합니다. 입력된 범위를 조정했습니다."
+
+            return (start, end), None
         except ValueError:
             raise ValueError("invalid_verse_format")
     else:
         try:
             verse = int(verse_text)
-            return (verse, verse)
+            return (verse, verse), None
         except ValueError:
             raise ValueError("invalid_verse_format")
 
@@ -109,11 +112,11 @@ def resolve_reference(version_list, book_str, chapter_str, verse_str, bible_data
     version = versions[0]
 
     try:
-        verse_range = parse_verse_range(verse_str.strip(), version, book_key, chapter, bible_data)
+        verse_range, warning = parse_verse_range(verse_str.strip(), version, book_key, chapter, bible_data)
     except ValueError as e:
         raise e
 
-    return versions, book_key, chapter, verse_range
+    return versions, book_key, chapter, verse_range, warning
 
 
 def get_common_books_among_versions(versions, get_verses_func, bible_data=None) -> list:
@@ -196,7 +199,13 @@ def display_verse_logic(
         str | None: Output string or error message printed.
     """
     try:
-        versions, book, chapter, verse_range = ref_func()
+        versions, book, chapter, verse_range, warning = ref_func()
+
+        if warning:
+            if output_func:
+                output_func("[경고] " + warning)
+            elif hasattr(output_target, "append"):
+                output_target.append("[경고] " + warning)
 
         if not versions:
             raise ValueError("error_no_version_selected")
