@@ -250,3 +250,24 @@ class BibleDataLoader:
             else:
                 alias_map[k] = v
         return alias_map
+
+    # For compatibility with EuljiroWorship system    
+    def get_verse(self, version: str, book: str, chapter: int, verse: int) -> str | None:
+        """
+        Retrieves a single verse from a specified version/book/chapter/verse.
+
+        Args:
+            version (str): Bible version key (e.g., 'NKRV')
+            book (str): Book ID (e.g., 'John')
+            chapter (int): Chapter number
+            verse (int): Verse number
+
+        Returns:
+            str | None: Verse text, or None if not found
+        """
+        verses = self.get_verses(version)
+        return (
+            verses.get(book, {})
+                .get(str(chapter), {})
+                .get(str(verse))
+        )
