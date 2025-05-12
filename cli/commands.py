@@ -181,7 +181,7 @@ def run_bible_command(args):
     verse_range = (start, end)
 
     # Setup for shared engine logic
-    ref_func = lambda: (versions, book, int(chapter), verse_range)
+    ref_func = lambda: (versions, book, int(chapter), verse_range, None)
     settings = {}
 
     def print_output(text):

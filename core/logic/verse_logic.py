@@ -215,6 +215,19 @@ def display_verse_logic(
         if isinstance(verse_range, (int, str)):
             verse_range = (int(verse_range), int(verse_range))
 
+        if verse_range[1] == -1:
+            try:
+                max_verse = len(bible_data.get_verses(versions[0])[book][str(chapter)])
+                verse_range = (verse_range[0], max_verse)
+            except Exception:
+                if output_func:
+                    output_func("[ERROR] Chapter not found.")
+                elif hasattr(output_target, "setPlainText"):
+                    output_target.setPlainText("[ERROR] Chapter not found.")
+                else:
+                    print("[ERROR] Chapter not found.")
+                return
+
         # Load verses depending on mode
         if is_cli:
             verses_dict = bible_data.get_verses_for_display(versions, book, chapter, verse_range)
