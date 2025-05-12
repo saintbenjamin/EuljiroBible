@@ -29,15 +29,35 @@ except Exception as e:
 
 def resolve_book_name(name: str) -> str | None:
     """
-    Resolve a user-provided book name to the internal Bible ID.
+    Resolve a user-provided book name (alias or standard) to the internal Bible ID.
+
+    Accepts both alias keys and standard book names as input.
 
     Example:
         "요한복음" -> "John"
+        "John"     -> "John"
+        "창세기"   -> "Genesis"
+        "Genesis"  -> "Genesis"
 
-    :param name: Raw user input book name (e.g., 요한복음)
+    :param name: Raw user input
     :return: Internal book ID string if resolved, else None
     """
-    return BOOK_ALIASES.get(name.strip())
+    name = name.strip()
+
+    # Direct alias match
+    if name in BOOK_ALIASES:
+        return BOOK_ALIASES[name]
+
+    # Reverse match: name is already the internal ID
+    if name in BOOK_ALIASES.values():
+        return name
+
+    # Optional: case-insensitive reverse match
+    for val in BOOK_ALIASES.values():
+        if name.lower() == val.lower():
+            return val
+
+    return None
 
 def parse_reference(text: str):
     """
