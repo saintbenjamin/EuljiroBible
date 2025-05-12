@@ -18,10 +18,8 @@ from PySide6.QtWidgets import (
     QTextEdit, QMessageBox, QSizePolicy, QTableWidget, QSplitter, QTableWidgetItem
 )
 
-from core.utils.utils_bible import (
-    search_keywords, keyword_counts
-)
 from core.utils.bible_data_loader import BibleDataLoader
+from core.utils.bible_keyword_searcher import BibleKeywordSearcher
 from core.utils.logger import log_debug
 from core.utils.utils_bible import normalize_book_name, compact_book_id
 from core.utils.utils_output import format_output, save_to_files
@@ -151,8 +149,9 @@ class TabKeyword(QWidget):
             return
 
         # Perform search and generate summary
-        results = search_keywords(self.bible_data, version, keywords)
-        counts = keyword_counts(results, keywords)
+        searcher = BibleKeywordSearcher(version)
+        results = searcher.search(" ".join(keywords))
+        counts = searcher.count_keywords(results, keywords)
 
         self.update_table(results)
         self.update_summary(counts)

@@ -68,65 +68,6 @@ def normalize_book_name(book_text, bible_data, lang_code="ko"):
             return eng_key
     return book_text
 
-def search_keywords(bible_data: BibleDataLoader, version: str, keywords: list[str]) -> list[dict]:
-    """
-    Searches verses that contain all specified keywords.
-
-    Args:
-        bible_data (BibleDataLoader): Instance with loaded data
-        version (str): Bible version key
-        keywords (list[str]): List of keywords to search
-
-    Returns:
-        list[dict]: Matching verses with highlight metadata
-    """
-    if not version or not keywords:
-        return []
-
-    data = bible_data.get_verses(version)
-    if not data:
-        return []
-
-    regexes = [re.compile(re.escape(w), re.IGNORECASE) for w in keywords]
-    results = []
-
-    for book, chapters in data.items():
-        for ch_str, verses in chapters.items():
-            for v_str, text in verses.items():
-                if all(r.search(text) for r in regexes):
-                    # Apply highlight
-                    highlighted = text
-                    for r in regexes:
-                        highlighted = r.sub(lambda m: f'<span style="color:red; font-weight:bold;">{m.group()}</span>', highlighted)
-                    results.append({
-                        "book": book,
-                        "chapter": int(ch_str),
-                        "verse": int(v_str),
-                        "text": text,
-                        "highlighted": highlighted
-                    })
-    return results
-
-
-def keyword_counts(results, keywords):
-    """
-    Counts occurrences of each keyword in the search results.
-
-    Args:
-        results (list[dict]): Result list from search_keywords()
-        keywords (list[str]): List of keywords to count
-
-    Returns:
-        dict: keyword -> count
-    """
-    counts = {w: 0 for w in keywords}
-    for r in results:
-        text = r["text"]
-        for w in keywords:
-            counts[w] += len(re.findall(re.escape(w), text, re.IGNORECASE))
-    return counts
-
-
 def compact_book_id(name: str) -> str:
     """
     Normalizes a book name by removing all whitespace.
