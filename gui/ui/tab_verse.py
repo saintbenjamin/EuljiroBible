@@ -24,8 +24,8 @@ from PySide6.QtGui import QTextBlockFormat, QStandardItemModel
 
 from core.logic.verse_logic import display_verse_logic
 from core.utils.bible_data_loader import BibleDataLoader
+from core.utils.bible_parser import resolve_book_name
 from core.utils.logger import log_debug
-from core.utils.utils_bible import resolve_book_name
 from core.utils.utils_output import save_to_files
 from gui.ui.common import create_checkbox, create_svg_text_button, LoadingIndicator
 from gui.ui.locale.message_loader import load_messages
@@ -593,7 +593,7 @@ class TabVerse(QWidget):
         """
         from core.logic.verse_logic import shift_verse_value
 
-        versions, book, chapter, verse_range = self.get_reference()
+        versions, book, chapter, verse_range, warning = self.get_reference()
         if not versions:
             return
 

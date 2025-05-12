@@ -16,8 +16,8 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
+from core.utils.bible_parser import resolve_book_name
 from core.utils.utils_output import format_output
-from core.utils.utils_bible import resolve_book_name
 
 def parse_verse_range(verse_text, version, book, chapter, bible_data):
     """

@@ -20,8 +20,8 @@ from PySide6.QtWidgets import (
 
 from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.bible_keyword_searcher import BibleKeywordSearcher
+from core.utils.bible_parser import resolve_book_name
 from core.utils.logger import log_debug
-from core.utils.utils_bible import normalize_book_name, compact_book_id
 from core.utils.utils_output import format_output, save_to_files
 from gui.ui.common import create_svg_text_button
 from gui.ui.locale.message_loader import load_messages
@@ -194,12 +194,12 @@ class TabKeyword(QWidget):
 
             # Extract book, chapter, and verse from selected reference
             book_str, chap_verse = ref.rsplit(' ', 1)
-            book = normalize_book_name(book_str, self.bible_data, self.current_language)
+            book = resolve_book_name(book_str) or book_str  # fallback for safety
             chapter, verse = chap_verse.split(':')
             chapter = int(chapter)
             verse = int(verse) 
 
-            normalized = compact_book_id(book)
+            normalized = book.replace(" ", "")
             version = self.version_box.currentText()
             verses = self.bible_data.get_verses(version)
 

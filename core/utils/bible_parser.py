@@ -27,35 +27,45 @@ except Exception as e:
     BOOK_ALIASES = {}
 # ─────────────────────────────────────────────
 
-def resolve_book_name(name: str) -> str | None:
+def resolve_book_name(name: str, lang_map: dict = None, lang_code: str = "ko") -> str | None:
     """
-    Resolve a user-provided book name (alias or standard) to the internal Bible ID.
+    Resolve a user-provided book name (alias or standard) to the canonical internal ID.
 
-    Accepts both alias keys and standard book names as input.
+    This version supports:
+    - Strict alias matching from BOOK_ALIASES
+    - Reverse matching for canonical names
+    - Normalized comparison (lowercase, remove spaces/dots)
+    - Optional fallback to standard_book name mapping if provided
 
-    Example:
-        "요한복음" -> "John"
-        "John"     -> "John"
-        "창세기"   -> "Genesis"
-        "Genesis"  -> "Genesis"
-
-    :param name: Raw user input
-    :return: Internal book ID string if resolved, else None
+    :param name: Raw book name from user input (e.g., "요삼", "1Jn", "Genesis")
+    :param lang_map: Optional standard_book.json dict (key → { "ko": ..., "en": ... })
+    :param lang_code: Language key for matching standard book names (default: "ko")
+    :return: Canonical book ID (e.g., "3John"), or None if not found
     """
-    name = name.strip()
+    if not name:
+        return None
 
-    # Direct alias match
-    if name in BOOK_ALIASES:
-        return BOOK_ALIASES[name]
+    raw = name.strip()
+    normalized = raw.lower().replace(" ", "").replace(".", "")
 
-    # Reverse match: name is already the internal ID
-    if name in BOOK_ALIASES.values():
-        return name
+    # 1. Try direct alias match (with normalization)
+    for alias, canonical in BOOK_ALIASES.items():
+        alias_norm = alias.strip().lower().replace(" ", "").replace(".", "")
+        if normalized == alias_norm:
+            return canonical
 
-    # Optional: case-insensitive reverse match
-    for val in BOOK_ALIASES.values():
-        if name.lower() == val.lower():
-            return val
+    # 2. Reverse match if name is already canonical
+    for canonical in BOOK_ALIASES.values():
+        if normalized == canonical.lower().replace(" ", "").replace(".", ""):
+            return canonical
+
+    # 3. Fallback: optional standard book name matching
+    if lang_map:
+        for key, names in lang_map.items():
+            local = names.get(lang_code, "").lower().replace(" ", "").replace(".", "")
+            en = names.get("en", "").lower().replace(" ", "").replace(".", "")
+            if normalized == local or normalized == en:
+                return key
 
     return None
 
