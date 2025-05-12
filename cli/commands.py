@@ -21,6 +21,7 @@ from core.version import APP_VERSION
 from core.logic.verse_logic import display_verse_logic
 from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.bible_parser import resolve_book_name, parse_reference
+from core.utils.bible_keyword_searcher import BibleKeywordSearcher
 
 # Paths to alias and data files
 alias_file = paths.ALIASES_VERSION_CLI_FILE
@@ -209,8 +210,6 @@ def run_search_command(args):
     Usage:
         bible search <version> <keyword1> [keyword2 ...]
     """
-    from core.utils.utils_bible import search_keywords, keyword_counts
-    from core.utils.bible_data_loader import BibleDataLoader
 
     # --- CLI metadata options for bible search ---
     if len(args) == 1:
@@ -267,13 +266,14 @@ def run_search_command(args):
     full_version = [k for k, v in alias_map.items() if v == version_alias][0]
 
     # Load data
-    bible_data = BibleDataLoader(json_dir=name_path, text_dir=data_path)
-    bible_data.load_version(full_version)
+    try:
+        searcher = BibleKeywordSearcher(version=full_version)
+    except FileNotFoundError as e:
+        print(f"[ERROR] {e}")
+        return
 
-    verses = bible_data.get_verses(full_version)
-
-    results = search_keywords(bible_data, full_version, keywords)
-    counts = keyword_counts(results, keywords)
+    results = searcher.search(" ".join(keywords))
+    counts = searcher.count_keywords(results, keywords)
 
     if not results:
         print("[INFO] No verses found.")
