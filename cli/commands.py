@@ -20,7 +20,7 @@ from core.config import paths
 from core.version import APP_VERSION
 from core.logic.verse_logic import display_verse_logic
 from core.utils.bible_data_loader import BibleDataLoader
-from core.utils.utils_bible import normalize_book_name
+from core.utils.bible_parser import resolve_book_name, parse_reference
 
 # Paths to alias and data files
 alias_file = paths.ALIASES_VERSION_CLI_FILE
@@ -125,7 +125,7 @@ def run_bible_command(args):
         raw_book = remaining[0]
         bible_data = BibleDataLoader(json_dir=name_path, text_dir=data_path)
         bible_data.load_version(version)
-        book = normalize_book_name(raw_book, bible_data, lang_code="ko")
+        book = resolve_book_name(raw_book)
         if not book or book not in bible_data.get_verses(version):
             print(f"[ERROR] Unknown book name: '{raw_book}'")
             return
@@ -141,47 +141,25 @@ def run_bible_command(args):
         print("[ERROR] Invalid input. Usage: bible <version1> [version2 ...] <book> <chapter[:verse[-verse]]>")
         return
 
-    raw_book = remaining[0]
-    chapter_and_verse = remaining[1]
+    # Parse Bible reference using shared parser
+    raw_ref = " ".join(remaining)
+    parsed = parse_reference(raw_ref)
+    if not parsed:
+        print("[ERROR] Invalid Bible reference format.")
+        return
+
+    book, chapter, verse_range = parsed
 
     bible_data = BibleDataLoader(json_dir=name_path, text_dir=data_path)
     for v in versions:
         bible_data.load_version(v)
 
-    book = normalize_book_name(raw_book, bible_data, lang_code="ko")
-    if not book or book not in bible_data.get_verses(versions[0]):
-        print(f"[ERROR] Unknown book name: '{raw_book}'")
+    # Check book validity in loaded version
+    if book not in bible_data.get_verses(versions[0]):
+        print(f"[ERROR] Unknown book name: '{book}'")
         return
 
-    # Handle chapter and verse(s)
-    if ':' in chapter_and_verse:
-        chapter, verse_str = chapter_and_verse.split(":")
-        if not verse_str.strip():
-            print("[ERROR] Invalid format: missing verse number. Example: John 3:16 or John 3")
-            return
-        verse_parts = verse_str.split("-")
-        try:
-            if len(verse_parts) == 1:
-                start = end = int(verse_parts[0])
-            else:
-                start, end = int(verse_parts[0]), int(verse_parts[1])
-                if end < start:
-                    raise ValueError
-        except ValueError:
-            print("[ERROR] Invalid verse range. Start must be less than or equal to end.")
-            return
-    else:
-        # Only chapter given, show whole chapter
-        chapter = chapter_and_verse.strip()
-        if not chapter.isdigit():
-            print("[ERROR] Invalid chapter format.")
-            return
-        start, end = 1, -1
-
-    verse_range = (start, end)
-
-    # Setup for shared engine logic
-    ref_func = lambda: (versions, book, int(chapter), verse_range, None)
+    ref_func = lambda: (versions, book, chapter, verse_range, None)
     settings = {}
 
     def print_output(text):
