@@ -66,9 +66,11 @@ class TabVerse(QWidget, TabVerseUI):
         # Sort versions and assign logic handlers
         self.version_list = self.version_helper.sort_versions(version_list)
         self.output_handler = VerseOutputHandler(self.display_box, self.settings)
-
         self.current_language = settings.get("last_language", "ko")
         self.logic = TabVerseLogic(self.bible_data, self.tr, self.settings, self.current_language)
+        self.book_combo.currentTextChanged.connect(lambda _: self.reset_enter_state())
+        self.chapter_input.currentIndexChanged.connect(lambda _: self.reset_enter_state())
+        self.verse_input.textChanged.connect(lambda _: self.reset_enter_state())
 
     def change_language(self, lang_code):
         """
@@ -179,14 +181,12 @@ class TabVerse(QWidget, TabVerseUI):
         """
         Handles Enter key logic for alternating between search and save.
         """
-        if self.enter_state == 0:
-            # Display verse
+        if not self.formatted_verse_text:
             output = self.logic.display_verse(self.get_reference, self.verse_input, self.apply_output_text)
             if output:
                 self.formatted_verse_text = output
-            self.enter_state = 1
+                self.enter_state = 1
         else:
-            # Save verse
             try:
                 self.logic.save_verse(self.formatted_verse_text)
             except Exception as e:
@@ -244,6 +244,13 @@ class TabVerse(QWidget, TabVerseUI):
                 self.tr("warn_jump_title"),
                 self.tr("warn_jump_msg")
             )
+
+    def reset_enter_state(self):
+        """
+        Resets enter state to default: ready to display verse.
+        """
+        self.enter_state = 0
+        self.formatted_verse_text = ""
 
     def clear_outputs(self):
         """
