@@ -27,7 +27,7 @@ class TabKeyword(QWidget, TabKeywordUI):
     Displays results in a table, allows verse export, and supports multilingual UI updates.
     """
 
-    def __init__(self, version_list, settings, tr):
+    def __init__(self, version_list, settings, tr, get_polling_status=None, get_always_show_setting=None):
         """
         Initialize the keyword tab UI and logic layer.
 
@@ -46,7 +46,14 @@ class TabKeyword(QWidget, TabKeywordUI):
 
         self.logic = TabKeywordLogic(settings, tr)  # Search and logic backend
 
-        self.init_ui(version_list=version_list)     # Construct layout
+        self.get_polling_status = get_polling_status or self.get_polling_status
+        self.get_always_show_setting = get_always_show_setting or self.get_always_show_setting
+
+        self.init_ui(
+            version_list=version_list,
+            get_polling_status=get_polling_status or self.get_polling_status,
+            get_always_show_setting=get_always_show_setting or self.get_always_show_setting
+        )     # Construct layout
 
     def change_language(self, lang_code):
         """
@@ -108,3 +115,23 @@ class TabKeyword(QWidget, TabKeywordUI):
         :type counts: dict[str, int]
         """
         self.logic.update_summary(self, counts)
+
+    def get_polling_status(self):
+        """
+        Returns the current polling toggle state.
+        This method should be overridden or injected externally.
+
+        :return: True if polling is enabled, False otherwise.
+        :rtype: bool
+        """
+        return False  # Default fallback, should be replaced by actual callback
+
+    def get_always_show_setting(self):
+        """
+        Returns the current 'always show buttons' setting.
+        This method should be overridden or injected externally.
+
+        :return: True if always show is enabled, False otherwise.
+        :rtype: bool
+        """
+        return False  # Default fallback, should be replaced by actual callback

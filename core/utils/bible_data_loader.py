@@ -18,7 +18,6 @@ import json
 from core.config import paths
 from core.utils.logger import log_error
 
-
 class BibleDataLoader:
     """
     Loads and lazily caches Bible-related JSON data: version aliases, book aliases, canonical names,

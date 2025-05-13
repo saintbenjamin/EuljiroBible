@@ -19,8 +19,6 @@ from PySide6.QtWidgets import (
 )
 
 from gui.ui.common import create_svg_text_button
-from gui.utils.utils_window import find_window_main
-
 
 class TabKeywordUI:
     """
@@ -30,13 +28,16 @@ class TabKeywordUI:
     result table, and search summary area.
     """
 
-    def init_ui(self, version_list):
+    def init_ui(self, version_list, get_polling_status, get_always_show_setting):
         """
         Initializes the UI layout and widgets for keyword search.
 
         :param version_list: List of available Bible versions
         :type version_list: list[str]
         """
+        self.get_polling_status = get_polling_status
+        self.get_always_show_setting = get_always_show_setting
+
         layout = QVBoxLayout()
 
         # Bible version selector dropdown
@@ -129,13 +130,10 @@ class TabKeywordUI:
 
         Uses global setting `always_show_on_off_buttons` or the toggle state.
         """
-        window_main = find_window_main(self)
-        if not window_main:
-            return
 
         # Check polling or always-show flag
-        poll_enabled = window_main.poll_toggle_btn.isChecked()
-        always_show = window_main.settings.get("always_show_on_off_buttons", False)
+        poll_enabled = self.get_polling_status()
+        always_show = self.get_always_show_setting()
         effective_polling = poll_enabled or always_show
 
         # Adjust button visibility accordingly

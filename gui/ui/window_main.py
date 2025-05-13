@@ -13,17 +13,21 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
 import platform
+
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QTabWidget, QLabel, QMessageBox, QMenuBar, QMainWindow, QPushButton
+    QApplication, QWidget, QVBoxLayout, 
+    QTabWidget, QLabel, QMessageBox, 
+    QMenuBar, QMainWindow, QPushButton
 )
-from PySide6.QtCore import QFileSystemWatcher, QSize
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QAction, QIcon
 
-from core.utils.logger import log_debug
 from gui.config.config_manager import ConfigManager
 from gui.ui.locale.message_loader import get_available_languages, load_messages
 from gui.ui.monitor_memory import MonitorMemory
-from gui.utils.logger import log_error_with_dialog
+from gui.ui.tab_verse import TabVerse
+from gui.ui.tab_keyword import TabKeyword
+from gui.ui.tab_settings import TabSettings
 
 class WindowMain(QMainWindow):
     """
@@ -46,10 +50,6 @@ class WindowMain(QMainWindow):
 
         self.settings = settings
         self.app_version = app_version
-
-        from gui.ui.tab_verse import TabVerse
-        from gui.ui.tab_keyword import TabKeyword
-        from gui.ui.tab_settings import TabSettings
 
         self.current_language = "ko"
         self.messages = load_messages(self.current_language)
@@ -103,27 +103,45 @@ class WindowMain(QMainWindow):
 
         self.current_language = "ko"
 
-        self.tabs = QTabWidget()
-        self.tab_verse = TabVerse(version_list, self.settings, tr=self.tr)
-        self.tabs.addTab(self.tab_verse, self.tr("tab_verse"))
-        self.tab_keyword = TabKeyword(version_list, self.settings, tr=self.tr)
-        self.tabs.addTab(self.tab_keyword, self.tr("tab_search"))
-        self.tab_settings = TabSettings(
-            app=QApplication.instance(), 
-            settings=settings, 
-            overlay_callback=self.toggle_overlay, 
-            tr=self.tr, 
-            get_poll_enabled_callback=lambda: self.poll_toggle_btn.isChecked()
-        )
-        self.tabs.addTab(self.tab_settings, self.tr("tab_font"))
-        self.apply_tab_icons()
-
         self.poll_toggle_btn = QPushButton()
         self.poll_toggle_btn.setCheckable(True)
         poll_enabled = self.settings.get("poll_enabled", False)
         self.poll_toggle_btn.setChecked(poll_enabled)
         self.update_poll_button_text()
         self.poll_toggle_btn.clicked.connect(self.on_poll_toggle_clicked)
+
+        self.tabs = QTabWidget()
+        self.tab_verse = TabVerse(
+            version_list, 
+            self.settings, 
+            tr=self.tr,
+            get_polling_status=lambda: self.poll_toggle_btn.isChecked(),
+            get_always_show_setting=lambda: self.settings.get("always_show_on_off_buttons", False)
+        )
+        self.tabs.addTab(self.tab_verse, self.tr("tab_verse"))
+        self.tab_keyword = TabKeyword(
+            version_list, 
+            self.settings, 
+            tr=self.tr,
+            get_polling_status=lambda: self.poll_toggle_btn.isChecked(),
+            get_always_show_setting=lambda: self.settings.get("always_show_on_off_buttons", False)
+        )
+        self.tabs.addTab(self.tab_keyword, self.tr("tab_search"))
+        self.tab_settings = TabSettings(
+            app=QApplication.instance(), 
+            settings=settings, 
+            tr=self.tr, 
+            get_poll_enabled_callback=lambda: self.poll_toggle_btn.isChecked(),
+            get_main_geometry=self.frameGeometry,
+            refresh_settings_callback=None
+        )
+        self.tab_settings.refresh_settings_callback = self.refresh_settings_and_tabs
+        self.tab_settings.logic.refresh_settings_callback = self.refresh_settings_and_tabs
+
+        self.tabs.addTab(self.tab_settings, self.tr("tab_font"))
+        self.apply_tab_icons()
+
+        self.tab_settings.apply_dynamic_settings()
 
         layout.addWidget(self.poll_toggle_btn)
 
@@ -133,10 +151,6 @@ class WindowMain(QMainWindow):
         layout.addWidget(self.copyright_label)
 
         self.setCentralWidget(central_widget)
-
-        self.verse_path = self.settings.get("output_path", "verse_output.txt")
-        self.watcher = QFileSystemWatcher([self.verse_path])
-        self.watcher.fileChanged.connect(self.check_auto_overlay)   
 
         self.tab_verse.update_button_layout()
         self.tab_keyword.update_button_visibility()
@@ -214,6 +228,12 @@ class WindowMain(QMainWindow):
         
         ConfigManager.update_partial({"last_language": lang_code})
 
+    def refresh_settings_and_tabs(self):
+        self.settings = ConfigManager.load()
+        self.tab_verse.update_button_layout()
+        self.tab_keyword.update_button_visibility()
+        self.tab_settings.update_presentation_visibility()
+
     def apply_tab_icons(self):
         """
         Applies SVG icons to each tab in the tab widget, unless on macOS.
@@ -226,53 +246,6 @@ class WindowMain(QMainWindow):
         self.tabs.setTabIcon(0, QIcon("resources/svg/tab_verse.svg"))
         self.tabs.setTabIcon(1, QIcon("resources/svg/tab_search.svg"))
         self.tabs.setTabIcon(2, QIcon("resources/svg/tab_font.svg"))
-
-    def check_auto_overlay(self):
-        """
-        Monitors the verse output file and triggers the overlay display when appropriate.
-        """
-        import os
-        try:
-            self.verse_path = os.path.normpath(self.settings.get("output_path", "verse_output.txt"))
-            if not os.path.exists(self.verse_path):
-                log_error_with_dialog(f"[WindowMain.check_auto_overlay] File not found: {self.verse_path}")
-                return
-
-            try:
-                with open(self.verse_path, encoding="utf-8") as f:
-                    content = f.read().strip()
-            except (FileNotFoundError, PermissionError) as e:
-                log_error_with_dialog(e)
-                log_error_with_dialog(f"[WindowMain.check_auto_overlay] Failed to read file: {self.verse_path}")
-                return
-
-            auto_overlay = self.settings.get("auto_overlay_on_fill", False)
-
-
-            if content:
-                if auto_overlay and (not self.tab_settings.overlay or not self.tab_settings.overlay.isVisible()):
-                    if self.settings.get("display_overlay_mode") == "fullscreen" and len(QApplication.screens()) == 1:
-                        log_debug("[WindowMain.check_auto_overlay] Skipping overlay due to single display")
-                    else:
-                        self.toggle_overlay()
-
-            current_watched = [os.path.normpath(p) for p in self.watcher.files()]
-            if self.verse_path not in current_watched:
-                self.watcher.addPath(self.verse_path)
-
-        except Exception as e:
-            log_error_with_dialog(e)
-            log_error_with_dialog("[WindowMain.check_auto_overlay] Unexpected error occurred in check_auto_overlay.")
-
-    def toggle_overlay(self):
-        """
-        Toggles the overlay display visibility.
-
-        Delegates to TabSettings.toggle_overlay(), which handles safety checks
-        like fullscreen + single-display and creates the overlay if needed.
-        """
-        if not self.tab_settings.overlay or not self.tab_settings.overlay.isVisible():
-            self.tab_settings.toggle_overlay()
 
     def update_poll_button_text(self):
         """

@@ -22,10 +22,7 @@ from gui.constants import messages
 
 from gui.utils.settings_helper import update_overlay_settings
 from gui.utils.utils_fonts import apply_main_font_to_app, apply_overlay_font
-from gui.utils.utils_theme import refresh_main_tabs
-from gui.utils.utils_window import find_window_main
 from gui.utils.utils_dialog import get_save_path, set_color_from_dialog
-
 
 class TabSettingsLogic:
     """
@@ -41,7 +38,7 @@ class TabSettingsLogic:
     :type tr_func: Callable[[str], str]
     """
 
-    def __init__(self, settings, app, tr_func):
+    def __init__(self, settings, app, tr_func, refresh_settings_callback):
         """
         Initialize settings logic handler.
 
@@ -52,6 +49,7 @@ class TabSettingsLogic:
         self.settings = settings
         self.app = app
         self.tr = tr_func
+        self.refresh_settings_callback = refresh_settings_callback
 
     def apply_dynamic_settings(self, parent):
         """
@@ -93,10 +91,8 @@ class TabSettingsLogic:
             apply_overlay_font(parent.overlay, parent.settings)
 
         # Reload all tabs with new settings
-        window_main = find_window_main(parent)
-        if window_main:
-            window_main.settings = ConfigManager.load()
-            refresh_main_tabs(window_main)
+        if self.refresh_settings_callback:
+            self.refresh_settings_callback()
 
     def apply_font_to_children(self, parent, widget, font):
         """

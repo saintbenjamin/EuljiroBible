@@ -26,17 +26,3 @@ def set_dark_mode(app, enable: bool):
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyside6())
     else:
         app.setStyleSheet("")
-
-def refresh_main_tabs(window_main):
-    """
-    Refreshes layout or visibility of UI components in verse/keyword/settings tabs.
-    """
-    tab_verse = window_main.tabs.widget(0)
-    tab_keyword = window_main.tabs.widget(1)
-
-    if hasattr(tab_verse, "update_button_layout"):
-        tab_verse.update_button_layout()
-    if hasattr(tab_keyword, "update_button_visibility"):
-        tab_keyword.update_button_visibility()
-    if hasattr(window_main.tab_settings, "update_presentation_visibility"):
-        window_main.tab_settings.update_presentation_visibility()

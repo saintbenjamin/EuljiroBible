@@ -22,7 +22,6 @@ from gui.ui.locale.message_loader import load_messages
 from gui.ui.tab_verse_logic import TabVerseLogic
 from gui.ui.tab_verse_selection_manager import TabVerseSelectionManager
 from gui.ui.tab_verse_ui import TabVerseUI
-from gui.utils.utils_window import find_window_main
 from gui.utils.verse_output_handler import VerseOutputHandler
 
 
@@ -32,7 +31,7 @@ class TabVerse(QWidget, TabVerseUI):
     Provides display, navigation, and save functionality for selected verses.
     """
 
-    def __init__(self, version_list, settings, tr):
+    def __init__(self, version_list, settings, tr, get_polling_status=None, get_always_show_setting=None):
         """
         Initialize the TabVerse.
 
@@ -48,6 +47,9 @@ class TabVerse(QWidget, TabVerseUI):
         self.initializing = False
         self.settings = settings
         self.formatted_verse_text = ""
+
+        self.get_polling_status = get_polling_status or self.get_polling_status
+        self.get_always_show_setting = get_always_show_setting or self.get_always_show_setting
 
         # Load Bible data and UI components
         self.bible_data = BibleDataLoader()
@@ -123,12 +125,8 @@ class TabVerse(QWidget, TabVerseUI):
         """
         Updates the layout of the action buttons depending on polling mode.
         """
-        window_main = find_window_main(self)
-        if not window_main:
-            return
-
-        poll_enabled = window_main.poll_toggle_btn.isChecked()
-        always_show = window_main.settings.get("always_show_on_off_buttons", False)
+        poll_enabled = self.get_polling_status()
+        always_show = self.get_always_show_setting()
         effective_polling = poll_enabled or always_show
 
         # Clear all existing buttons
@@ -146,6 +144,26 @@ class TabVerse(QWidget, TabVerseUI):
         self.button_layout.addWidget(self.next_verse_btn)
         if effective_polling:
             self.button_layout.addWidget(self.clear_display_btn)
+
+    def get_polling_status(self):
+        """
+        Returns the current polling toggle state.
+        This method should be overridden or injected externally.
+
+        :return: True if polling is enabled, False otherwise.
+        :rtype: bool
+        """
+        return False  # Default fallback, should be replaced by actual callback
+
+    def get_always_show_setting(self):
+        """
+        Returns the current 'always show buttons' setting.
+        This method should be overridden or injected externally.
+
+        :return: True if always show is enabled, False otherwise.
+        :rtype: bool
+        """
+        return False  # Default fallback, should be replaced by actual callback
 
     def toggle_alias_mode(self):
         """

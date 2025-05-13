@@ -41,7 +41,7 @@ class BibleKeywordSearcher:
         with open(paths.STANDARD_BOOK_FILE, "r", encoding="utf-8") as f:
             self.name_map = json.load(f)
 
-    # [Benji] This is AND search algorithm.
+    # [Benji] This is strong search algorithm.
 
     # def search(self, keyword: str, limit: int = 100) -> list[dict]:
     #     """
@@ -78,21 +78,7 @@ class BibleKeywordSearcher:
     #                         return results
     #     return results
 
-    # [Benji] These two (normalize, search) are for OR search algorithm.
-
-    def normalize(self, text):
-        """
-        Normalize the given text by removing all non-word characters.
-
-        This function strips out all special characters including punctuation and whitespace,
-        leaving only alphanumeric and underscore characters. Used for keyword comparison.
-
-        :param text: Input string to normalize
-        :type text: str
-        :return: Normalized string with non-word characters removed
-        :rtype: str
-        """
-        return re.sub(r"[^\w]", "", text)
+    # [Benji] These is loose search algorithm.
 
     def search(self, keyword: str, limit: int = 100) -> list[dict]:
         """
@@ -122,17 +108,6 @@ class BibleKeywordSearcher:
                             "highlighted": highlighted
                         })
         return results
-
-    def get_korean_book_name(self, canonical_name):
-        """
-        Retrieve the Korean display name for the given canonical book ID.
-
-        :param canonical_name: Internal Bible book ID (e.g., "Genesis", "John")
-        :type canonical_name: str
-        :return: Korean book name if found, otherwise the input name
-        :rtype: str
-        """
-        return self.name_map.get(canonical_name, {}).get("ko", canonical_name)
     
     def count_keywords(self, results: list[dict], keywords: list[str]) -> dict[str, int]:
         """

@@ -19,14 +19,11 @@ from core.utils.file_helpers import should_show_overlay
 from core.utils.logger import log_debug
 from gui.config.config_manager import ConfigManager
 from gui.ui.locale.message_loader import load_messages
+from gui.ui.tab_settings_ui import TabSettingsUI
+from gui.ui.tab_settings_logic import TabSettingsLogic
 from gui.utils.overlay_factory import create_overlay
 from gui.utils.utils_display import get_display_descriptions
 from gui.utils.utils_theme import set_dark_mode
-from gui.utils.utils_window import find_window_main
-
-from gui.ui.tab_settings_ui import TabSettingsUI
-from gui.ui.tab_settings_logic import TabSettingsLogic
-
 
 class TabSettings(QWidget, TabSettingsUI):
     """
@@ -34,7 +31,7 @@ class TabSettings(QWidget, TabSettingsUI):
     overlay display configuration, file output path, and polling mechanism.
     """
 
-    def __init__(self, app, settings, overlay_callback, tr, get_poll_enabled_callback=None):
+    def __init__(self, app, settings, tr, get_poll_enabled_callback=None, get_main_geometry=None, refresh_settings_callback=None):
         """
         Initializes the settings tab with provided context.
 
@@ -42,8 +39,6 @@ class TabSettings(QWidget, TabSettingsUI):
         :type app: QApplication
         :param settings: Shared settings dictionary
         :type settings: dict
-        :param overlay_callback: Callback function to control overlay
-        :type overlay_callback: Callable
         :param tr: Translation function
         :type tr: Callable[[str], str]
         :param get_poll_enabled_callback: Optional polling state checker
@@ -54,7 +49,6 @@ class TabSettings(QWidget, TabSettingsUI):
         self.app = app
         self.settings = settings
         self.verse_path = self.settings.get("output_path", "verse_output.txt")
-        self.overlay_callback = overlay_callback
 
         # Timer for polling verse output file
         self.poll_timer = QTimer(self)
@@ -62,9 +56,12 @@ class TabSettings(QWidget, TabSettingsUI):
         if self.settings.get("poll_enabled", False):
             self.poll_timer.start(self.settings.get("poll_interval", 1000))
 
+        self.get_main_geometry = get_main_geometry or self.get_main_geometry
+        self.refresh_settings_callback = refresh_settings_callback or (lambda: None)
+
         self.overlay = None
         self.get_poll_enabled = get_poll_enabled_callback or (lambda: False)
-        self.logic = TabSettingsLogic(app, settings, tr)
+        self.logic = TabSettingsLogic(app, settings, tr, refresh_settings_callback)
 
         self.init_ui()
 
@@ -89,7 +86,7 @@ class TabSettings(QWidget, TabSettingsUI):
         self.overlay_group.setTitle(self.tr("setting_overlay"))
         self.poll_label.setText(self.tr("label_poll_interval"))
         self.poll_save.setText(self.tr("btn_poll_interval_save"))
-        self.always_on_off_checkbox.setText(self.tr("checkbox_show_on_off_buttons"))
+        self.always_on_off_checkbox.setText(self.tr("checkbox_show_on_off"))
         self.overlay_mode_combo.setItemText(0, self.tr("fullscreen"))
         self.overlay_mode_combo.setItemText(1, self.tr("resizable"))
         self.display_font_family_label.setText(self.tr("label_font_family"))
@@ -176,8 +173,7 @@ class TabSettings(QWidget, TabSettingsUI):
         is_fullscreen = self.settings.get("display_overlay_mode", "fullscreen") == "fullscreen"
 
         if is_fullscreen:
-            main_window = find_window_main(self)
-            main_geom = main_window.frameGeometry()
+            main_geom = self.get_main_geometry()
             main_screen = QApplication.screenAt(main_geom.center())
 
             if screen_count > 1:
@@ -207,6 +203,11 @@ class TabSettings(QWidget, TabSettingsUI):
         self.overlay = create_overlay(self.settings, target_geometry, parent=self)
         self.overlay.show()
         log_debug("[TabSettings] overlay turned ON")
+
+    def get_main_geometry(self):
+        print("get_main_geometry internally called")
+        from PySide6.QtCore import QRect
+        return QRect(0, 0, 0, 0)
 
     def populate_displays(self):
         """
@@ -250,6 +251,9 @@ class TabSettings(QWidget, TabSettingsUI):
         """
         Shows or hides the overlay configuration group based on polling or always-show setting.
         """
+
+        self.settings["always_show_on_off_buttons"] = self.always_on_off_checkbox.isChecked()
+
         always_on = self.settings.get("always_show_on_off_buttons", False)
         poll_enabled = self.get_poll_enabled()
         effective_polling = poll_enabled or always_on
