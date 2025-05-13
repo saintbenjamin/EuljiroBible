@@ -98,7 +98,7 @@ def parse_reference(text: str):
     # Convert string components to integers
     chapter = int(chapter_str)
 
-    # Support chapter-only input (e.g., "요한복음 3")
+    # Support chapter-only input (e.g., "John 3")
     if verse_start_str is None:
         return book_id, chapter, (1, -1)
 
