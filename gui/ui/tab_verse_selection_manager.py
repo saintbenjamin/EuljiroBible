@@ -1,24 +1,46 @@
-import platform
+# -*- coding: utf-8 -*-
+"""
+File: EuljiroBible/gui/ui/tab_verse_selection_manager.py
+Handles version selection and book/chapter dropdown synchronization in the TabVerse panel.
 
+Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
+Affiliated Church: The Eulji-ro Presbyterian Church [대한예수교장로회(통합) 을지로교회]
+Address: The Eulji-ro Presbyterian Church, 24-10, Eulji-ro 20-gil, Jung-gu, Seoul 04549, South Korea
+Telephone: +82-2-2266-3070
+E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
+Copyright (c) 2025 The Eulji-ro Presbyterian Church.
+License: MIT License with Attribution Requirement (see LICENSE file for details)
+"""
+
+import platform
 from PySide6.QtWidgets import QMessageBox, QCheckBox
 
 from core.utils.bible_parser import resolve_book_name
 from core.utils.logger import log_debug
-
 from gui.ui.common import create_checkbox
 from gui.utils.logger import log_error_with_dialog
 
+
 class TabVerseSelectionManager:
     """
-    Manages the logic for updating the book dropdown based on selected versions and language.
+    Manages the logic for updating version checkboxes, summary label,
+    and dropdowns for book and chapter selection in the TabVerse UI.
+
+    :param bible_data: Instance of BibleDataLoader
+    :type bible_data: BibleDataLoader
+    :param version_helper: Helper for version selection and validation
+    :type version_helper: VerseVersionHelper
+    :param tr_func: Translation function (usually `self.tr`)
+    :type tr_func: Callable[[str], str]
     """
 
     def __init__(self, bible_data, version_helper, tr_func):
         """
-        Args:
-            bible_data: BibleDataLoader instance
-            version_helper: VersionHelper instance
-            tr_func: Translation function
+        Initialize the manager with data and helpers.
+
+        :param bible_data: Bible data loader
+        :param version_helper: Instance for managing selected versions
+        :param tr_func: Translation function
         """
         self.bible_data = bible_data
         self.version_helper = version_helper
@@ -26,31 +48,33 @@ class TabVerseSelectionManager:
 
     def create_version_checkbox(self, parent, version_name):
         """
-        Creates a version checkbox widget.
+        Creates a checkbox for a given Bible version.
 
-        Args:
-            version_name (str): Full version name.
-
-        Returns:
-            QCheckBox: The version checkbox.
+        :param parent: Parent widget with access to bible_data and update method
+        :param version_name: Full name of the version
+        :type version_name: str
+        :return: Configured QCheckBox
+        :rtype: QCheckBox
         """
         label = parent.bible_data.aliases_version.get(version_name, version_name)
         checkbox = create_checkbox(label, callback=lambda _: self.update_version_summary(parent))
         checkbox.version_key = version_name
         checkbox.setToolTip(version_name)
-        checkbox.setEnabled(True)    
-
+        checkbox.setEnabled(True)
         return checkbox
 
     def update_grid_layout(self, parent):
         """
-        Updates the layout grid dynamically based on width.
+        Updates the layout grid for version checkboxes based on platform-specific width.
+
+        :param parent: Parent widget with scroll and layout references
         """
         width = parent.version_scroll.viewport().width()
 
+        # Use different ratios for Windows vs others due to scrollbar/rendering differences
         if platform.system() == "Windows":
             column_width = 190
-            usable_width = int(width * 0.6)        
+            usable_width = int(width * 0.6)
         else:
             column_width = 170
             usable_width = int(width * 0.7)
@@ -62,7 +86,9 @@ class TabVerseSelectionManager:
 
     def update_version_summary(self, parent):
         """
-        Updates the selected version summary label and refreshes the book dropdown.
+        Updates the label summarizing selected versions and repopulates book dropdown.
+
+        :param parent: TabVerse instance with summary label and dropdown widgets
         """
         if getattr(parent, "initializing", False):
             return
@@ -87,7 +113,6 @@ class TabVerseSelectionManager:
             return
 
         parent.version_summary_label.setText(summary)
-
         self.update_book_dropdown(parent, parent.current_language)
 
         for v in selected_versions:
@@ -95,16 +120,19 @@ class TabVerseSelectionManager:
                 log_debug(f"[TabVerse] selected versions: {parent.version_helper.get_selected_versions()}")
             except Exception as e:
                 log_error_with_dialog(e)
-                QMessageBox.critical(self,
+                QMessageBox.critical(
+                    parent,
                     parent.tr("error_loading_title"),
-                    parent.tr("error_loading_msg").format(v, e))
+                    parent.tr("error_loading_msg").format(v, e)
+                )
 
     def populate_book_dropdown(self, parent, lang_code=None):
         """
-        Populates the book dropdown list based on language.
+        Populates the book dropdown with all standard books.
 
-        Args:
-            lang_code (str, optional): Language code.
+        :param parent: TabVerse instance with combo box
+        :param lang_code: Language code ('ko' or 'en')
+        :type lang_code: str | None
         """
         if lang_code is None:
             lang_code = "ko"
@@ -121,17 +149,10 @@ class TabVerseSelectionManager:
 
     def update_book_dropdown(self, parent, lang_code=None):
         """
-        Updates the book dropdown to match selected versions.
+        Updates the book dropdown to show only those available in all selected versions.
 
-        Args:
-            parent: The TabVerse instance (contains UI references)
-            lang_code (str): Language code to use ("ko" or "en")
-
-        Handles:
-            - No version selected → skip with no warning
-            - No common books → clear + warning
-            - Previously selected book no longer available → fallback + warning
-            - Empty previous state → fallback with no warning
+        :param parent: TabVerse instance with input fields and book combo box
+        :param lang_code: Language code ('ko' or 'en')
         """
         if getattr(parent, "initializing", False):
             return
@@ -142,6 +163,7 @@ class TabVerseSelectionManager:
         versions = self.version_helper.get_selected_versions()
 
         if not versions:
+            # Clear all inputs if no versions are selected
             parent.book_combo.blockSignals(True)
             parent.book_combo.clear()
             parent.book_combo.blockSignals(False)
@@ -149,10 +171,12 @@ class TabVerseSelectionManager:
             parent.verse_input.clear()
             return
 
+        # Validate and get common books
         common_books = self.version_helper.get_common_books()
         versions, common_books = self.version_helper.validate_selection()
 
         if not common_books:
+            # Warn user if no books are shared among selected versions
             parent.book_combo.blockSignals(True)
             parent.book_combo.clear()
             parent.book_combo.blockSignals(False)
@@ -165,20 +189,21 @@ class TabVerseSelectionManager:
             )
             return
 
+        # Backup current selections
         current_display_text = parent.book_combo.currentText().strip()
         current_book_eng = resolve_book_name(current_display_text, lang_code)
         current_chapter = parent.chapter_input.currentText().strip()
         current_verse = parent.verse_input.text().strip()
 
+        # Update the book dropdown list
         parent.book_combo.blockSignals(True)
         parent.book_combo.clear()
-
         for book in common_books:
             display_name = self.bible_data.get_standard_book(book, lang_code)
             parent.book_combo.addItem(display_name, userData=book)
-
         parent.book_combo.blockSignals(False)
 
+        # Try to restore previous selection
         found = False
         for i in range(parent.book_combo.count()):
             if parent.book_combo.itemData(i) == current_book_eng:
@@ -195,13 +220,16 @@ class TabVerseSelectionManager:
                     self.tr("warn_book_not_in_versions_msg")
                 )
 
+        # Reapply previous chapter/verse values
         self.update_chapter_dropdown(parent)
         parent.chapter_input.setCurrentText(current_chapter)
         parent.verse_input.setText(current_verse)
 
     def update_chapter_dropdown(self, parent):
         """
-        Updates the chapter dropdown based on selected book and version.
+        Updates the chapter dropdown to reflect the selected book and version.
+
+        :param parent: TabVerse instance with combo boxes and data access
         """
         selected_versions = parent.version_helper.get_selected_versions()
         if not selected_versions:
@@ -209,15 +237,19 @@ class TabVerseSelectionManager:
 
         version = selected_versions[0]
         book_display = parent.book_combo.currentText().strip()
+
+        # Resolve internal book name
         book = resolve_book_name(book_display, parent.bible_data, parent.current_language)
-    
+
         if not book:
             parent.chapter_input.clear()
             return
-    
+
         if book in parent.bible_data.get_verses(version):
+            # Get chapter numbers from the version's verse structure
             chapters = parent.bible_data.get_verses(version).get(book, {}).keys()
             max_chapter = max(int(ch) for ch in chapters)
+
             parent.chapter_input.blockSignals(True)
             parent.chapter_input.clear()
             parent.chapter_input.addItems([str(i) for i in range(1, max_chapter + 1)])
