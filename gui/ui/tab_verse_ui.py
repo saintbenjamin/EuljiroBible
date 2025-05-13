@@ -65,7 +65,7 @@ class TabVerseUI:
             self.tr("btn_search"),
             30,
             "Search",
-            self.display_verse
+            lambda: self._on_display_verse()
         )
         self.save_btn = create_svg_text_button(
             "resources/svg/btn_output.svg",
@@ -144,3 +144,16 @@ class TabVerseUI:
 
         self.setLayout(layout)
         layout.addWidget(self.loading_indicator)  # For loading animation
+
+    def _on_display_verse(self):
+        """
+        Gets reference and calls logic to display verse.
+        Used as callback from UI buttons.
+        """
+        output = self.logic.display_verse(
+            self.get_reference,
+            self.verse_input,
+            self.apply_output_text
+        )
+        if output:
+            self.formatted_verse_text = output

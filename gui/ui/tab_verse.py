@@ -22,6 +22,7 @@ from core.utils.utils_output import save_to_files
 from core.utils.verse_version_helper import VerseVersionHelper
 
 from gui.ui.locale.message_loader import load_messages
+from gui.ui.tab_verse_logic import TabVerseLogic
 from gui.ui.tab_verse_selection_manager import TabVerseSelectionManager
 from gui.ui.tab_verse_ui import TabVerseUI
 from gui.utils.logger import log_error_with_dialog
@@ -63,6 +64,9 @@ class TabVerse(QWidget, TabVerseUI):
 
         self.version_list = self.version_helper.sort_versions(version_list)
         self.output_handler = VerseOutputHandler(self.display_box, self.settings)
+
+        self.current_language = settings.get("last_language", "ko")
+        self.logic = TabVerseLogic(self.bible_data, self.tr, self.settings, self.current_language)
 
     def change_language(self, lang_code):
         """
@@ -167,7 +171,13 @@ class TabVerse(QWidget, TabVerseUI):
         Handles Enter key behavior: alternating search/save.
         """
         if self.enter_state == 0:
-            self.display_verse()
+            output = self.logic.display_verse(
+                self.get_reference,
+                self.verse_input,
+                self.apply_output_text
+            )
+            if output:
+                self.formatted_verse_text = output
             self.enter_state = 1
         else:
             self.save_verse()
@@ -285,7 +295,13 @@ class TabVerse(QWidget, TabVerseUI):
                     self.tr("warn_range_max").format(max_verse))
 
             self.verse_input.setText(str(new_val))
-            self.display_verse()
+            output = self.logic.display_verse(
+                self.get_reference,
+                self.verse_input,
+                self.apply_output_text
+            )
+            if output:
+                self.formatted_verse_text = output
 
         except ValueError:
             log_error_with_dialog("[TabVerse] Invalid verse input.")
