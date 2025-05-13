@@ -66,6 +66,8 @@ class TabKeyword(QWidget, TabKeywordUI):
         self.messages = load_messages(lang_code)
 
         # Update placeholder and all text labels
+        self.radio_and.setText(self.tr("search_mode_all"))
+        self.radio_compact.setText(self.tr("search_mode_compact"))
         self.keyword_input.setPlaceholderText(self.tr("search_keyword_hint"))
         self.search_button.setText(self.tr("btn_search"))
         self.select_button.setText(self.tr("btn_output"))
