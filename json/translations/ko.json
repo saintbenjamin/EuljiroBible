@@ -25,6 +25,8 @@
   "btn_clear": "OFF",
   "msg_no_word": "말씀 없음",
   "msg_nothing": "(없음)",
+  "search_mode_all": "모두 포함",
+  "search_mode_compact": "붙여서 검색",
   "search_keyword_hint": "예: 하나님이 세상을",
   "search_location": "위치",
   "search_verse": "말씀",

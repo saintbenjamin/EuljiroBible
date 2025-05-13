@@ -41,52 +41,42 @@ class BibleKeywordSearcher:
         with open(paths.STANDARD_BOOK_FILE, "r", encoding="utf-8") as f:
             self.name_map = json.load(f)
 
-    # [Benji] This is strong search algorithm.
-
-    # def search(self, keyword: str, limit: int = 100) -> list[dict]:
-    #     """
-    #     Search Bible text for the given keyword (simple normalized OR-search).
-
-    #     :param keyword: Keyword or phrase to search for
-    #     :param limit: Maximum number of results to return
-    #     :return: List of matching verse dictionaries
-    #     """
-    #     results = []
-    #     stripped = keyword.strip()
-    #     compressed = stripped.replace(" ", "")  # remove all spaces
-    #     pattern = re.compile(re.escape(compressed), re.IGNORECASE)
-
-    #     for book, chapters in self.data.items():
-    #         for chapter_num, verses in chapters.items():
-    #             for verse_num, verse_text in verses.items():
-    #                 normalized = verse_text.replace(" ", "")
-    #                 if compressed in normalized:
-    #                     # Apply highlighting to the raw verse text
-    #                     highlighted = pattern.sub(
-    #                         lambda m: f'<span style="color:red; font-weight:bold;">{m.group(0)}</span>',
-    #                         verse_text
-    #                     )
-    #                     results.append({
-    #                         "book": book,
-    #                         "chapter": int(chapter_num),
-    #                         "verse": int(verse_num),
-    #                         "text": verse_text.strip(),
-    #                         "highlighted": highlighted.strip()
-    #                     })
-
-    #                     if len(results) >= limit:
-    #                         return results
-    #     return results
-
-    # [Benji] These is loose search algorithm.
-
-    def search(self, keyword: str, limit: int = 100) -> list[dict]:
+    def search_compact_string(self, keyword: str, limit: int = 100) -> list[dict]:
         """
-        Search Bible text for the given keyword.
+        Search using compressed (whitespace-removed) keyword.
+        Matches continuous strings regardless of spacing.
+        """
+        results = []
+        stripped = keyword.strip()
+        compressed = stripped.replace(" ", "")  # remove all spaces
+        pattern = re.compile(re.escape(compressed), re.IGNORECASE)
 
-        :param keyword: Keyword or phrase to search for
-        :param limit: Maximum number of results to return
-        :return: List of matching verse dictionaries
+        for book, chapters in self.data.items():
+            for chapter_num, verses in chapters.items():
+                for verse_num, verse_text in verses.items():
+                    normalized = verse_text.replace(" ", "")
+                    if compressed in normalized:
+                        # Apply highlighting to the raw verse text
+                        highlighted = pattern.sub(
+                            lambda m: f'<span style="color:red; font-weight:bold;">{m.group(0)}</span>',
+                            verse_text
+                        )
+                        results.append({
+                            "book": book,
+                            "chapter": int(chapter_num),
+                            "verse": int(verse_num),
+                            "text": verse_text.strip(),
+                            "highlighted": highlighted.strip()
+                        })
+
+                        if len(results) >= limit:
+                            return results
+        return results
+
+    def search_wordwise_and(self, keyword: str, limit: int = 100) -> list[dict]:
+        """
+        Search using word-based AND logic.
+        All words must be present in the verse text.
         """
         results = []
         words = keyword.strip().split()
@@ -109,6 +99,18 @@ class BibleKeywordSearcher:
                         })
         return results
     
+    def search(self, keyword: str, limit: int = 100, mode: str = "and") -> list[dict]:
+        """
+        Unified search interface.
+
+        :param keyword: Input keyword(s)
+        :param limit: Max results
+        :param mode: 'and' (default) or 'compact'
+        """
+        if mode == "compact":
+            return self.search_compact_string(keyword, limit)
+        return self.search_wordwise_and(keyword, limit)
+
     def count_keywords(self, results: list[dict], keywords: list[str]) -> dict[str, int]:
         """
         Count total occurrences of each keyword across all result texts.

@@ -25,6 +25,8 @@
   "btn_clear": "OFF",
   "msg_no_word": "No verse",
   "msg_nothing": "(None)",
+  "search_mode_all": "All words",
+  "search_mode_compact": "Exact phrase",
   "search_keyword_hint": "e.g., God so loved",
   "search_location": "Reference",
   "search_verse": "Verse text",

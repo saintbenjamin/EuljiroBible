@@ -14,8 +14,10 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox,
-    QTextEdit, QSizePolicy, QTableWidget, QSplitter
+    QWidget, QVBoxLayout, QHBoxLayout, 
+    QLabel, QLineEdit, QComboBox,
+    QTextEdit, QSizePolicy, QTableWidget, 
+    QSplitter, QRadioButton, QButtonGroup
 )
 
 from gui.ui.common import create_svg_text_button
@@ -87,20 +89,35 @@ class TabKeywordUI:
         self.table.setColumnWidth(0, 150)
         self.table.horizontalHeader().setStretchLastSection(True)
 
-        # Top row layout (version dropdown + keyword input + search button)
-        top = QHBoxLayout()
-        top.addWidget(self.version_box)
-        top.addWidget(self.keyword_input)
-        top.addWidget(self.search_button)
+        # 1. Bible version selector - first row
+        version_row = QHBoxLayout()
+        version_row.addWidget(self.version_box)
+        layout.addLayout(version_row)
+
+        # 2. Search mode + keyword input + search button - second row
+        search_row = QHBoxLayout()
+
+        # Radio buttons for selecting search mode
+        self.radio_and = QRadioButton(self.tr("search_mode_all"))       # "All words"
+        self.radio_compact = QRadioButton(self.tr("search_mode_compact"))  # "Exact phrase"
+        self.radio_and.setChecked(True)
+
+        self.radio_group = QButtonGroup()
+        self.radio_group.addButton(self.radio_and)
+        self.radio_group.addButton(self.radio_compact)
+
+        search_row.addWidget(self.radio_and)
+        search_row.addWidget(self.radio_compact)
+        search_row.addWidget(self.keyword_input)
+        search_row.addWidget(self.search_button)
+
+        layout.addLayout(search_row)
 
         # Button layout (select/clear)
         btns = QHBoxLayout()
         self.btns = btns
         btns.addWidget(self.select_button)
         btns.addWidget(self.clear_button)
-
-        # Add top and button rows to main layout
-        layout.addLayout(top)
         layout.addLayout(btns)
 
         # Splitter for table and summary area

@@ -55,9 +55,12 @@ class TabKeywordLogic:
             QMessageBox.warning(parent, parent.tr("warn_input_title"), parent.tr("warn_input_msg"))
             return
 
+        # Determine search mode based on radio button selection
+        mode = "compact" if parent.radio_compact.isChecked() else "and"
+
         # Execute search using the keyword search engine
         searcher = BibleKeywordSearcher(version)
-        results = searcher.search(" ".join(keywords))
+        results = searcher.search(" ".join(keywords), mode=mode)  # pass mode explicitly
         counts = searcher.count_keywords(results, keywords)
 
         parent.update_table(results)
@@ -69,6 +72,7 @@ class TabKeywordLogic:
 
         if not results:
             QMessageBox.information(parent, parent.tr("info_no_results_title"), parent.tr("info_no_results_msg"))
+
 
     def save_selected_verse(self, parent):
         """
@@ -165,7 +169,7 @@ class TabKeywordLogic:
             display_book = parent.bible_data.get_standard_book(res['book'], parent.current_language)
             ref_item = QTableWidgetItem(f"{display_book} {res['chapter']}:{res['verse']}")
             ref_item.setFont(parent.table.font())
-            ref_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            ref_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
             ref_item.setFlags(ref_item.flags() ^ Qt.ItemFlag.ItemIsEditable)
             parent.table.setItem(i, 0, ref_item)
 
@@ -179,6 +183,15 @@ class TabKeywordLogic:
 
         parent.table.setWordWrap(True)
         parent.table.resizeRowsToContents()
+    
+        # Set padding for cleaner spacing
+        parent.table.setStyleSheet("QTableWidget::item { padding: 6px; }")
+
+        # Ensure content-based height + add breathing room
+        parent.table.resizeRowsToContents()
+        for row in range(parent.table.rowCount()):
+            h = parent.table.rowHeight(row)
+            parent.table.setRowHeight(row, h + 4)
 
     def update_summary(self, parent, counts):
         """
