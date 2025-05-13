@@ -214,7 +214,7 @@ class TabVerse(QWidget, TabVerseUI):
 
     def shift_verse(self, delta):
         try:
-            self.logic.delta = delta  # 또는 파라미터로 넘겨도 됨
+            self.logic.delta = delta
             new_val = self.logic.shift_verse(self.get_reference, self.verse_input)
             if new_val:
                 output = self.logic.display_verse(self.get_reference, self.verse_input, self.apply_output_text)
