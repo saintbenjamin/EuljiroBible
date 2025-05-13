@@ -215,69 +215,18 @@ class TabVerse(QWidget, TabVerseUI):
             self.output_handler.apply_output_text(text)
 
     def shift_verse(self, delta):
-        """
-        Shifts to previous or next verse.
-
-        Args:
-            delta (int): Shift amount (positive or negative).
-        """
-        from core.logic.verse_logic import shift_verse_value
-
-        versions, book, chapter, verse_range, warning = self.get_reference()
-        if not versions:
-            return
-
-        version = versions[0]
-        book = resolve_book_name(book, self.bible_data, self.current_language)
-        if book not in self.bible_data.get_verses(version):
-            log_error_with_dialog(f"[TabVerse] Book '{book}' not found in version '{version}'")
-            return
-
         try:
-            if not isinstance(verse_range, tuple):
-                log_error_with_dialog("[TabVerse] verse_range is not a tuple")
-                return
-
-            if verse_range[0] != verse_range[1]:
-                QMessageBox.warning(self, 
-                    self.tr("warn_jump_title"), 
-                    self.tr("warn_jump_msg"))
-                return
-
-            current = verse_range[0]
-            max_verse = self.bible_data.get_max_verse(version, book, chapter)
-            if max_verse == 0:
-                QMessageBox.warning(self, 
-                    self.tr("warn_no_chapter_title"), 
-                    self.tr("warn_no_chapter_msg").format(book, chapter))
-                return
-
-            new_val = shift_verse_value(current, delta, max_verse)
-
-            if new_val == 1 and current + delta < 1:
-                QMessageBox.warning(self, 
-                    self.tr("warn_range_title"), 
-                    self.tr("warn_range_min"))
-            elif new_val == max_verse and current + delta > max_verse:
-                QMessageBox.warning(self, 
-                    self.tr("warn_range_title"), 
-                    self.tr("warn_range_max").format(max_verse))
-
-            self.verse_input.setText(str(new_val))
-            output = self.logic.display_verse(
-                self.get_reference,
-                self.verse_input,
-                self.apply_output_text
-            )
-            if output:
-                self.formatted_verse_text = output
-
-        except ValueError:
-            log_error_with_dialog("[TabVerse] Invalid verse input.")
+            self.logic.delta = delta  # 또는 파라미터로 넘겨도 됨
+            new_val = self.logic.shift_verse(self.get_reference, self.verse_input)
+            if new_val:
+                output = self.logic.display_verse(self.get_reference, self.verse_input, self.apply_output_text)
+                if output:
+                    self.formatted_verse_text = output
+        except Exception as e:
             QMessageBox.warning(
                 self,
-                self.tr("warn_verse_input_title"),
-                self.tr("warn_verse_input_msg")
+                self.tr("warn_jump_title"),
+                self.tr("warn_jump_msg")
             )
 
     def clear_outputs(self):
