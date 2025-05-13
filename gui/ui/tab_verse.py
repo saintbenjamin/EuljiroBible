@@ -12,9 +12,7 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
-import platform
-
-from PySide6.QtWidgets import QWidget, QMessageBox, QCheckBox
+from PySide6.QtWidgets import QWidget, QMessageBox, QGridLayout
 
 from core.logic.verse_logic import display_verse_logic
 from core.utils.bible_data_loader import BibleDataLoader
@@ -23,13 +21,13 @@ from core.utils.logger import log_debug
 from core.utils.utils_output import save_to_files
 from core.utils.verse_version_helper import VerseVersionHelper
 
-from gui.ui.common import create_checkbox
 from gui.ui.locale.message_loader import load_messages
+from gui.ui.tab_verse_selection_manager import TabVerseSelectionManager
+from gui.ui.tab_verse_ui import TabVerseUI
 from gui.utils.logger import log_error_with_dialog
 from gui.utils.utils_window import find_window_main
 from gui.utils.verse_output_handler import VerseOutputHandler
 
-from gui.ui.tab_verse_ui import TabVerseUI
 
 class TabVerse(QWidget, TabVerseUI):
     """
@@ -54,9 +52,15 @@ class TabVerse(QWidget, TabVerseUI):
         self.formatted_verse_text = ""
 
         self.bible_data = BibleDataLoader()
+        self.version_layout = QGridLayout()
+        self.version_helper = VerseVersionHelper(self.bible_data, self.version_layout)
+        self.selection_manager = TabVerseSelectionManager(self.bible_data, self.version_helper, self.tr)
+
         self.version_list = version_list
         self.init_ui(version_list)
-        self.version_helper = VerseVersionHelper(self.bible_data, self.version_layout)
+
+        self.version_helper.version_layout = self.version_layout
+
         self.version_list = self.version_helper.sort_versions(version_list)
         self.output_handler = VerseOutputHandler(self.display_box, self.settings)
 
@@ -88,7 +92,7 @@ class TabVerse(QWidget, TabVerseUI):
 
         self.verse_input.setPlaceholderText(self.tr("verse_input_hint"))
 
-        self.populate_book_dropdown(lang_code)
+        self.selection_manager.populate_book_dropdown(self)
 
         if hasattr(self, "alias_toggle_btn"):
             if self.use_alias:
@@ -96,142 +100,13 @@ class TabVerse(QWidget, TabVerseUI):
             else:
                 self.alias_toggle_btn.setText(self.tr("label_alias_full"))
 
-        self.update_book_dropdown(lang_code=lang_code)
+        self.selection_manager.update_book_dropdown(self, self.current_language)
 
         self.prev_verse_btn.setText(self.tr("btn_prev"))
         self.search_btn.setText(self.tr("btn_search"))
         self.save_btn.setText(self.tr("btn_output"))
         self.next_verse_btn.setText(self.tr("btn_next"))
         self.clear_display_btn.setText(self.tr("btn_clear"))
-
-    def populate_book_dropdown(self, lang_code=None):
-        """
-        Populates the book dropdown list based on language.
-
-        Args:
-            lang_code (str, optional): Language code.
-        """
-        if lang_code is None:
-            lang_code = "ko"
-
-        self.book_combo.blockSignals(True)
-        self.book_combo.clear()
-
-        for book_key, names in self.bible_data.standard_book.items():
-            display_name = names.get(lang_code, book_key)
-            self.book_combo.addItem(display_name)
-
-        self.book_combo.setCurrentIndex(0)
-        self.book_combo.blockSignals(False)
-
-    def update_book_dropdown(self, lang_code=None):
-        """
-        Updates the book dropdown to match selected versions.
-        Handles:
-        - No version selected → skip with no warning
-        - No common books → clear + warning
-        - Previously selected book no longer available → fallback + warning
-        - Empty previous state → fallback with no warning
-        """
-        if getattr(self, "initializing", False):
-            return
-
-        if lang_code is None:
-            lang_code = "en" if self.tr("menu_lang") == "Language" else "ko"
-
-        versions = self.version_helper.get_selected_versions()
-
-        # ✅ Case 1: No versions selected at all — silent clear
-        if not versions:
-            self.book_combo.blockSignals(True)
-            self.book_combo.clear()
-            self.book_combo.blockSignals(False)
-            self.chapter_input.clear()
-            self.verse_input.clear()
-            return
-
-        common_books = self.version_helper.get_common_books()
-        versions, common_books = self.version_helper.validate_selection()
-
-        # ✅ Case 2: Versions selected but no common books
-        if not common_books:
-            self.book_combo.blockSignals(True)
-            self.book_combo.clear()
-            self.book_combo.blockSignals(False)
-            self.chapter_input.clear()
-            self.verse_input.clear()
-            QMessageBox.warning(
-                self,
-                self.tr("warn_common_book_title"),
-                self.tr("warn_common_book_msg")
-            )
-            return
-
-        # ✅ Preserve current input before clearing UI
-        current_display_text = self.book_combo.currentText().strip()
-        current_book_eng = resolve_book_name(current_display_text, self.bible_data, lang_code)
-        current_chapter = self.chapter_input.currentText().strip()
-        current_verse = self.verse_input.text().strip()
-
-        self.book_combo.blockSignals(True)
-        self.book_combo.clear()
-
-        for book in common_books:
-            display_name = self.bible_data.get_standard_book(book, lang_code)
-            self.book_combo.addItem(display_name, userData=book)
-
-        self.book_combo.blockSignals(False)
-
-        # ✅ Case 3: Restore previously selected book if still valid
-        found = False
-        for i in range(self.book_combo.count()):
-            if self.book_combo.itemData(i) == current_book_eng:
-                self.book_combo.setCurrentIndex(i)
-                found = True
-                break
-
-        # ✅ Case 4: Not found → fallback + warning only if previously set
-        if not found:
-            self.book_combo.setCurrentIndex(0)
-            if current_display_text:
-                QMessageBox.warning(
-                    self,
-                    self.tr("warn_common_book_title"),
-                    self.tr("warn_book_not_in_versions_msg")
-                )
-
-        # ✅ Restore chapter/verse input
-        self.update_chapter_dropdown()
-        self.chapter_input.setCurrentText(current_chapter)
-        self.verse_input.setText(current_verse)
-
-
-    def update_chapter_dropdown(self):
-        """
-        Updates the chapter dropdown based on selected book and version.
-        """
-        selected_versions = self.version_helper.get_selected_versions()
-        if not selected_versions:
-            return
-
-        version = selected_versions[0]
-        book_display = self.book_combo.currentText().strip()
-        book = resolve_book_name(book_display, self.bible_data, self.current_language)
-    
-        if not book:
-            self.chapter_input.clear()
-            return
-    
-        if book in self.bible_data.get_verses(version):
-            chapters = self.bible_data.get_verses(version).get(book, {}).keys()
-            max_chapter = max(int(ch) for ch in chapters)
-            self.chapter_input.blockSignals(True)
-            self.chapter_input.clear()
-            self.chapter_input.addItems([str(i) for i in range(1, max_chapter + 1)])
-            self.chapter_input.setEditText("")
-            self.chapter_input.blockSignals(False)
-        else:
-            self.chapter_input.clear()
 
     def resizeEvent(self, event):
         """
@@ -241,82 +116,7 @@ class TabVerse(QWidget, TabVerseUI):
             event (QResizeEvent): Resize event.
         """
         super().resizeEvent(event)
-        self.update_grid_layout()
-
-    def create_version_checkbox(self, version_name):
-        """
-        Creates a version checkbox widget.
-
-        Args:
-            version_name (str): Full version name.
-
-        Returns:
-            QCheckBox: The version checkbox.
-        """
-        label = self.bible_data.aliases_version.get(version_name, version_name)
-        checkbox = create_checkbox(label, callback=self.update_version_summary)
-        checkbox.version_key = version_name
-        checkbox.setToolTip(version_name)
-        checkbox.setEnabled(True)    
-
-        return checkbox
-
-    def update_grid_layout(self):
-        """
-        Updates the layout grid dynamically based on width.
-        """
-        width = self.version_scroll.viewport().width()
-
-        if platform.system() == "Windows":
-            column_width = 190
-            usable_width = int(width * 0.6)        
-        else:
-            column_width = 170
-            usable_width = int(width * 0.7)
-
-        columns = max(1, usable_width // column_width)
-
-        for idx, checkbox in enumerate(self.version_widget.findChildren(QCheckBox)):
-            self.version_layout.addWidget(checkbox, idx // columns, idx % columns)
-
-    def update_version_summary(self):
-        """
-        Updates the selected version summary label and refreshes the book dropdown.
-        """
-        if getattr(self, "initializing", False):
-            return
-
-        selected_versions = self.version_helper.get_selected_versions()
-
-        if selected_versions:
-            if self.use_alias:
-                summary = ", ".join([self.bible_data.aliases_version.get(v, v) for v in selected_versions])
-            else:
-                summary = ", ".join(selected_versions)
-        else:
-            summary = self.tr("msg_nothing")
-            QMessageBox.warning(
-                self,
-                self.tr("warn_version_title"),
-                self.tr("warn_version_msg")
-            )
-            self.book_combo.clear()
-            self.chapter_input.clear()
-            self.verse_input.clear()
-            return
-
-        self.version_summary_label.setText(summary)
-
-        self.update_book_dropdown()
-
-        for v in selected_versions:
-            try:
-                log_debug(f"[TabVerse] selected versions: {self.version_helper.get_selected_versions()}")
-            except Exception as e:
-                log_error_with_dialog(e)
-                QMessageBox.critical(self,
-                    self.tr("error_loading_title"),
-                    self.tr("error_loading_msg").format(v, e))
+        self.selection_manager.update_grid_layout(self)
 
 
     def update_button_layout(self):
@@ -360,7 +160,7 @@ class TabVerse(QWidget, TabVerseUI):
             self.alias_toggle_btn.setText(self.tr("label_alias_short"))
         else:
             self.alias_toggle_btn.setText(self.tr("label_alias_full"))
-        self.update_version_summary()
+        self.update_version_summary(self)
 
     def handle_enter(self):
         """

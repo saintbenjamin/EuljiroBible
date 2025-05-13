@@ -115,7 +115,7 @@ def launch(app, saved_versions, settings, app_version):
 
     # Allow change-tracking again
     tab_verse.initializing = False
-    tab_verse.update_version_summary()
+    tab_verse.selection_manager.update_version_summary(tab_verse)
 
     # Save all current UI state (font, selection, version, etc.)
     save_settings_from_ui(app, tab_verse)

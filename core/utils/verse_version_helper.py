@@ -32,9 +32,12 @@ class VerseVersionHelper:
         selected = []
         for i in range(self.version_layout.count()):
             item = self.version_layout.itemAt(i)
-            widget = item.widget() if isinstance(item, QLayoutItem) else item
-            if isinstance(widget, QCheckBox) and widget.isChecked():
-                selected.append(widget.version_key)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, QCheckBox):
+                if widget.isChecked():
+                    selected.append(widget.version_key)
         return selected
 
     def get_common_books(self):

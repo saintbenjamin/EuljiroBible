@@ -23,10 +23,10 @@ class TabVerseUI:
             else:
                 version_name = version
 
-            checkbox = self.create_version_checkbox(version_name)
+            checkbox = self.selection_manager.create_version_checkbox(self, version_name)
             self.version_layout.addWidget(checkbox)
 
-        self.update_grid_layout()
+        self.selection_manager.update_grid_layout(self)
 
         self.enter_state = 0
         self.use_alias = False
@@ -50,7 +50,8 @@ class TabVerseUI:
         self.book_combo.setModel(QStandardItemModel(self.book_combo))
         self.book_combo.setEditable(True)
         self.book_combo.setInsertPolicy(QComboBox.NoInsert)
-        self.book_combo.currentTextChanged.connect(self.update_chapter_dropdown)
+        self.book_combo.currentTextChanged.connect(lambda _: self.selection_manager.update_chapter_dropdown(self))
+
 
         self.chapter_input = QComboBox()
         self.chapter_input.setEditable(True)
