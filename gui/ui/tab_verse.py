@@ -12,12 +12,12 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
+import traceback
+
 from PySide6.QtWidgets import QWidget, QMessageBox, QGridLayout
 
-from core.logic.verse_logic import display_verse_logic
 from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.bible_parser import resolve_book_name
-from core.utils.logger import log_debug
 from core.utils.utils_output import save_to_files
 from core.utils.verse_version_helper import VerseVersionHelper
 
@@ -180,7 +180,15 @@ class TabVerse(QWidget, TabVerseUI):
                 self.formatted_verse_text = output
             self.enter_state = 1
         else:
-            self.save_verse()
+            try:
+                self.logic.save_verse(self.formatted_verse_text)
+            except Exception as e:
+                print(traceback.format_exc())
+                QMessageBox.critical(
+                    self,
+                    self.tr("error_output_title"),
+                    self.tr("error_output_msg").format(str(e))
+                )
             self.enter_state = 0
 
     def get_reference(self):
@@ -205,45 +213,6 @@ class TabVerse(QWidget, TabVerseUI):
         if text:
             self.formatted_verse_text = text
             self.output_handler.apply_output_text(text)
-
-    def display_verse(self):
-        """
-        Displays the selected Bible verses by retrieving them from the data source.
-        Delegates rendering to the display_verse_logic in verse_logic.
-        """
-        versions = self.version_helper.get_selected_versions()
-        if not versions:
-            QMessageBox.warning(
-                self,
-                self.tr("warn_selection_title"),
-                self.tr("error_no_version_selected")
-            )
-            return
-        output = display_verse_logic(
-            self.get_reference,
-            self.verse_input,
-            self.bible_data,
-            self.tr,
-            self.settings,
-            self.current_language,
-            self.apply_output_text
-        )
-        if output:
-            self.formatted_verse_text = output
-
-    def save_verse(self):
-        """
-        Saves the currently displayed verse text to file.
-        """
-        log_debug("[TabVerse] save_verse called")
-        try:
-            self.output_handler.save_verse(self.formatted_verse_text)
-            log_debug("[TabVerse] verse saved successfully")
-        except Exception as e:
-            QMessageBox.critical(self,
-                self.tr("error_saving_title"),
-                self.tr("error_saving_msg").format(e))
-            log_error_with_dialog("[TabVerse] failed to save verse")
 
     def shift_verse(self, delta):
         """

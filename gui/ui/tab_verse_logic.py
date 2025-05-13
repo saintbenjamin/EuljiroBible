@@ -42,3 +42,20 @@ class TabVerseLogic:
             apply_output_text
         )
         return output
+
+    def save_verse(self, formatted_verse_text):
+        """
+        Saves the currently displayed verse text to file.
+
+        Args:
+            formatted_verse_text (str): Text to be saved.
+        Raises:
+            Exception: If saving fails.
+        """
+        from core.utils.utils_output import save_to_files
+
+        try:
+            text = formatted_verse_text or ""
+            save_to_files(text, self.settings)
+        except Exception as e:
+            raise Exception(f"Failed to save verse: {e}")

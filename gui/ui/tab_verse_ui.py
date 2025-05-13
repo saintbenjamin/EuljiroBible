@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QLabel, QLineEdit, QPushButton, 
     QComboBox, QTextEdit, QScrollArea, 
-    QGridLayout, QSplitter
+    QGridLayout, QSplitter, QMessageBox
 )
 from PySide6.QtGui import QStandardItemModel
 
@@ -65,14 +65,14 @@ class TabVerseUI:
             self.tr("btn_search"),
             30,
             "Search",
-            lambda: self._on_display_verse()
+            self._on_display_verse
         )
         self.save_btn = create_svg_text_button(
             "resources/svg/btn_output.svg",
             self.tr("btn_output"),
             30,
             "Start slide show",
-            self.save_verse
+            self._on_save_verse
         )
         self.clear_display_btn = create_svg_text_button(
             "resources/svg/btn_clear.svg",
@@ -157,3 +157,14 @@ class TabVerseUI:
         )
         if output:
             self.formatted_verse_text = output
+
+    def _on_save_verse(self):
+        try:
+            self.logic.save_verse(self.formatted_verse_text)
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                self.tr("error_output_title"),
+                self.tr("error_output_msg").format(str(e))
+            )
+
