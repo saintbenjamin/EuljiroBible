@@ -28,6 +28,7 @@ from gui.utils.logger import log_error_with_dialog
 from gui.utils.utils_window import find_window_main
 
 from gui.ui.tab_verse_ui import TabVerseUI
+from gui.utils.verse_output_handler import VerseOutputHandler
 
 class TabVerse(QWidget, TabVerseUI):
     """
@@ -54,6 +55,7 @@ class TabVerse(QWidget, TabVerseUI):
         self.bible_data = BibleDataLoader()
         self.version_list = self.sort_versions(version_list)
         self.init_ui(version_list)
+        self.output_handler = VerseOutputHandler(self.display_box, self.settings)
 
     def sort_versions(self, version_list):
         version_list.sort(key=self.bible_data.get_sort_key())
@@ -397,14 +399,9 @@ class TabVerse(QWidget, TabVerseUI):
         """
         Displays the provided verse text in the display box with custom line height.
         """
-        self.display_box.setText(text)
-
-        cursor = self.display_box.textCursor()
-        cursor.select(cursor.SelectionType.Document)
-
-        block_format = QTextBlockFormat()
-        block_format.setLineHeight(18.0, 4)  # Sets line spacing to approximately 150%
-        cursor.setBlockFormat(block_format)
+        if text:
+            self.formatted_verse_text = text
+            self.output_handler.apply_output_text(text)
 
     def display_verse(self):
         """
@@ -437,9 +434,7 @@ class TabVerse(QWidget, TabVerseUI):
         """
         log_debug("[TabVerse] save_verse called")
         try:
-            if not hasattr(self, "formatted_verse_text"):
-                self.formatted_verse_text = ""
-            save_to_files(self.formatted_verse_text, self.settings)
+            self.output_handler.save_verse(self.formatted_verse_text)
             log_debug("[TabVerse] verse saved successfully")
         except Exception as e:
             QMessageBox.critical(self,
