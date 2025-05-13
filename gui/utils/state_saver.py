@@ -25,7 +25,7 @@ def save_settings_from_ui(app, tab_verse):
         app (QApplication): The main application instance.
         tab_verse (TabVerse): The verse tab widget containing the UI state.
     """
-    selected_versions = tab_verse.get_selected_versions()
+    selected_versions = tab_verse.version_helper.get_selected_versions()
     settings = {
         "font_family": app.font().family(),
         "font_size": app.font().pointSize(),

@@ -15,20 +15,21 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 import platform
 
 from PySide6.QtWidgets import QWidget, QMessageBox, QCheckBox
-from PySide6.QtGui import QTextBlockFormat
 
 from core.logic.verse_logic import display_verse_logic
 from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.bible_parser import resolve_book_name
 from core.utils.logger import log_debug
 from core.utils.utils_output import save_to_files
+from core.utils.verse_version_helper import VerseVersionHelper
+
 from gui.ui.common import create_checkbox
 from gui.ui.locale.message_loader import load_messages
 from gui.utils.logger import log_error_with_dialog
 from gui.utils.utils_window import find_window_main
+from gui.utils.verse_output_handler import VerseOutputHandler
 
 from gui.ui.tab_verse_ui import TabVerseUI
-from gui.utils.verse_output_handler import VerseOutputHandler
 
 class TabVerse(QWidget, TabVerseUI):
     """
@@ -53,19 +54,11 @@ class TabVerse(QWidget, TabVerseUI):
         self.formatted_verse_text = ""
 
         self.bible_data = BibleDataLoader()
-        self.version_list = self.sort_versions(version_list)
+        self.version_list = version_list
         self.init_ui(version_list)
+        self.version_helper = VerseVersionHelper(self.bible_data, self.version_layout)
+        self.version_list = self.version_helper.sort_versions(version_list)
         self.output_handler = VerseOutputHandler(self.display_box, self.settings)
-
-    def sort_versions(self, version_list):
-        version_list.sort(key=self.bible_data.get_sort_key())
-
-        def custom_sort_key(version):
-            prefix = version.split()[0]
-            return (self.bible_data.sort_order.get(prefix, 99), version)
-
-        version_list.sort(key=custom_sort_key)
-        return version_list
 
     def change_language(self, lang_code):
         """
@@ -77,7 +70,7 @@ class TabVerse(QWidget, TabVerseUI):
         self.current_language = lang_code
         self.messages = load_messages(lang_code)
 
-        selected_versions = self.get_selected_versions()
+        selected_versions = self.version_helper.get_selected_versions()
 
         if selected_versions:
             if self.use_alias:
@@ -146,7 +139,7 @@ class TabVerse(QWidget, TabVerseUI):
         if lang_code is None:
             lang_code = "en" if self.tr("menu_lang") == "Language" else "ko"
 
-        versions = self.get_selected_versions()
+        versions = self.version_helper.get_selected_versions()
 
         # ✅ Case 1: No versions selected at all — silent clear
         if not versions:
@@ -157,8 +150,8 @@ class TabVerse(QWidget, TabVerseUI):
             self.verse_input.clear()
             return
 
-        common_books = self.get_common_books()
-        versions, common_books = self.validate_selection()
+        common_books = self.version_helper.get_common_books()
+        versions, common_books = self.version_helper.validate_selection()
 
         # ✅ Case 2: Versions selected but no common books
         if not common_books:
@@ -217,7 +210,7 @@ class TabVerse(QWidget, TabVerseUI):
         """
         Updates the chapter dropdown based on selected book and version.
         """
-        selected_versions = self.get_selected_versions()
+        selected_versions = self.version_helper.get_selected_versions()
         if not selected_versions:
             return
 
@@ -293,7 +286,7 @@ class TabVerse(QWidget, TabVerseUI):
         if getattr(self, "initializing", False):
             return
 
-        selected_versions = self.get_selected_versions()
+        selected_versions = self.version_helper.get_selected_versions()
 
         if selected_versions:
             if self.use_alias:
@@ -318,7 +311,7 @@ class TabVerse(QWidget, TabVerseUI):
 
         for v in selected_versions:
             try:
-                log_debug(f"[TabVerse] selected versions: {self.get_selected_versions()}")
+                log_debug(f"[TabVerse] selected versions: {self.version_helper.get_selected_versions()}")
             except Exception as e:
                 log_error_with_dialog(e)
                 QMessageBox.critical(self,
@@ -389,7 +382,7 @@ class TabVerse(QWidget, TabVerseUI):
         """
         from core.logic.verse_logic import resolve_reference
 
-        version_list = self.get_selected_versions()
+        version_list = self.version_helper.get_selected_versions()
         book_str = self.book_combo.currentText()
         chapter_str = self.chapter_input.currentText()
         verse_str = self.verse_input.text()
@@ -408,7 +401,7 @@ class TabVerse(QWidget, TabVerseUI):
         Displays the selected Bible verses by retrieving them from the data source.
         Delegates rendering to the display_verse_logic in verse_logic.
         """
-        versions = self.get_selected_versions()
+        versions = self.version_helper.get_selected_versions()
         if not versions:
             QMessageBox.warning(
                 self,
@@ -501,56 +494,6 @@ class TabVerse(QWidget, TabVerseUI):
                 self.tr("warn_verse_input_title"),
                 self.tr("warn_verse_input_msg")
             )
-
-
-    def get_selected_versions(self):
-        """
-        Returns the list of selected versions.
-
-        Returns:
-            list: Selected version names.
-        """
-        selected = []
-        for i in range(self.version_layout.count()):
-            widget = self.version_layout.itemAt(i).widget()
-            if isinstance(widget, QCheckBox) and widget.isChecked():
-                selected.append(widget.version_key)
-        return selected
-
-    def get_common_books(self):
-        """
-        Finds common books among selected versions.
-
-        Returns:
-            list: Common books available.
-        """
-        from core.logic.verse_logic import get_common_books_among_versions
-
-        versions = self.get_selected_versions()
-        if not versions:
-            return []
-
-        common_books = get_common_books_among_versions(versions, self.bible_data.get_verses, self.bible_data)
-        all_books = list(self.bible_data.standard_book.keys())
-        return [b for b in all_books if b in common_books]
-
-
-    def validate_selection(self):
-        """
-        Validates that versions and common books are available.
-
-        Returns:
-            tuple: (versions, common_books), or (None, None) if invalid.
-        """
-        from core.logic.verse_logic import validate_versions_and_books
-
-        if getattr(self, "initializing", False):
-            return self.get_selected_versions(), self.get_common_books()
-
-        versions = self.get_selected_versions()
-        validated_versions, common_books = validate_versions_and_books(versions, self.bible_data)
-
-        return validated_versions, common_books
 
     def clear_outputs(self):
         """

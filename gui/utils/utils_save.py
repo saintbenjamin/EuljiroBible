@@ -28,7 +28,7 @@ def save_user_settings(app, win):
     if not win:
         return
     tab_verse = win.tabs.widget(0)
-    selected_versions = tab_verse.get_selected_versions()
+    selected_versions = tab_verse.version_helper.get_selected_versions()
     book_combo = tab_verse.book_combo
     chapter_input = tab_verse.chapter_input
     verse_input = tab_verse.verse_input
