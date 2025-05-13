@@ -17,7 +17,6 @@ import traceback
 from PySide6.QtWidgets import QWidget, QMessageBox, QGridLayout
 
 from core.utils.bible_data_loader import BibleDataLoader
-from core.utils.bible_parser import resolve_book_name
 from core.utils.utils_output import save_to_files
 from core.utils.verse_version_helper import VerseVersionHelper
 
@@ -25,7 +24,6 @@ from gui.ui.locale.message_loader import load_messages
 from gui.ui.tab_verse_logic import TabVerseLogic
 from gui.ui.tab_verse_selection_manager import TabVerseSelectionManager
 from gui.ui.tab_verse_ui import TabVerseUI
-from gui.utils.logger import log_error_with_dialog
 from gui.utils.utils_window import find_window_main
 from gui.utils.verse_output_handler import VerseOutputHandler
 
