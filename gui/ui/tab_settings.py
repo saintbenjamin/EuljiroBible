@@ -12,10 +12,6 @@ Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
-# External libraries
-import qdarkstyle
-import platform
-
 # PySide6 modules
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QWidget, QMessageBox, QApplication 
@@ -23,30 +19,24 @@ from PySide6.QtCore import QCoreApplication
 
 # Core utilities
 from core.utils.file_helpers import should_show_overlay
-from core.utils.input_validators import validate_int
 from core.utils.logger import log_debug
 
 # GUI config and constants
 from gui.config.config_manager import ConfigManager
-from gui.constants import messages
 
 # Localization
 from gui.ui.locale.message_loader import load_messages
 
 # Overlay logic
 from gui.utils.overlay_factory import create_overlay
-from gui.utils.settings_helper import update_overlay_settings
-
-# Dialog utilities
-from gui.utils.utils_dialog import get_save_path, set_color_from_dialog
 
 # Display/font/theme/window helpers
 from gui.utils.utils_display import get_display_descriptions
-from gui.utils.utils_fonts import apply_main_font_to_app, apply_overlay_font
-from gui.utils.utils_theme import set_dark_mode, refresh_main_tabs
+from gui.utils.utils_theme import set_dark_mode
 from gui.utils.utils_window import find_window_main
 
 from gui.ui.tab_settings_ui import TabSettingsUI
+from gui.ui.tab_settings_logic import TabSettingsLogic
 
 class TabSettings(QWidget, TabSettingsUI):
     """
@@ -87,14 +77,9 @@ class TabSettings(QWidget, TabSettingsUI):
         self.overlay = None
         self.get_poll_enabled = get_poll_enabled_callback or (lambda: False)
 
-        self.init_ui()
+        self.logic = TabSettingsLogic(app, settings, tr)
 
-    def populate_displays(self):
-        """
-        Populates the display dropdown with available screens.
-        """
-        self.display_combo.clear()
-        self.display_combo.addItems(get_display_descriptions())
+        self.init_ui()
 
     def change_language(self, lang_code):
         """
@@ -135,6 +120,27 @@ class TabSettings(QWidget, TabSettingsUI):
         self.settings["last_language"] = lang_code
         ConfigManager.update_partial({"last_language": lang_code})
 
+    def apply_dynamic_settings(self):
+        self.logic.apply_dynamic_settings(self)
+
+    def apply_font_to_children(self, widget, font):
+        self.logic.apply_font_to_children(self)
+
+    def select_text_color(self):
+        self.logic.select_text_color(self)
+
+    def select_bg_color(self):
+        self.logic.select_bg_color(self)
+
+    def select_output_path(self):
+        self.logic.select_output_path(self)
+
+    def apply_polling_settings(self):
+        self.logic.apply_polling_settings(self)
+
+    def save_poll_interval(self, parent):
+        self.logic.save_poll_interval(self)
+
     def toggle_theme(self):
         """
         Toggles between dark mode and light mode for the application.
@@ -153,91 +159,6 @@ class TabSettings(QWidget, TabSettingsUI):
                 self.tr("error_set_saving_title"),
                 self.tr("error_set_saving_msg").format(e),
             )
-
-    def apply_dynamic_settings(self):
-        """
-        Applies font, overlay, style settings, and updates button visibility dynamically.
-        """
-        if not hasattr(self, "display_font_size_combo"):
-            return
-
-        # Apply main font to the entire application
-        apply_main_font_to_app(
-            self.font_family_combo.currentText(),
-            int(self.font_size_combo.currentText()),
-            self.font_weight_combo.currentData(),
-            self.window()
-        )
-
-        # Update overlay settings dictionary from current widgets
-        updated_overlay = update_overlay_settings(self.settings, {
-            "font_family_combo": self.display_font_family_combo,
-            "font_size_combo": self.display_font_size_combo,
-            "font_weight_combo": self.display_font_weight_combo,
-            "alpha_slider": self.alpha_slider,
-            "text_color_btn": self.text_color_btn,
-            "bg_color_btn": self.bg_color_btn,
-            "mode_combo": self.overlay_mode_combo
-        })
-
-        # Save overlay settings to config
-        ConfigManager.update_partial(updated_overlay)
-
-        # Save toggle state of ON/OFF visibility setting
-        always_show_on_off = self.always_on_off_checkbox.isChecked()
-        ConfigManager.update_partial({"always_show_on_off_buttons": always_show_on_off})
-        self.settings["always_show_on_off_buttons"] = always_show_on_off
-
-        # Reapply font to overlay if visible
-        if self.overlay:
-            apply_overlay_font(self.overlay, self.settings)
-
-        # Reload settings into the main window and refresh all tabs
-        window_main = find_window_main(self)
-        if window_main:
-            window_main.settings = ConfigManager.load()
-            refresh_main_tabs(window_main)
-
-    def apply_font_to_children(self, widget, font):
-        """
-        Recursively applies the font to all child widgets.
-
-        Args:
-            widget (QWidget): Parent widget.
-            font (QFont): Font to apply.
-        """
-        widget.setFont(font)
-        for child in widget.findChildren(QWidget):
-            child.setFont(font)
-
-    def select_text_color(self):
-        """
-        Opens a color dialog to select the overlay text color.
-
-        On valid color selection, updates the button style,
-        saves the selected color to settings, and reapplies dynamic settings.
-        """
-        set_color_from_dialog(self.text_color_btn, "display_text_color", self.apply_dynamic_settings)
-
-    def select_bg_color(self):
-        """
-        Opens a color dialog to select the overlay background color.
-
-        On valid color selection, updates the button style,
-        saves the selected color to settings, and reapplies dynamic settings.
-        """
-        set_color_from_dialog(self.bg_color_btn, "display_bg_color", self.apply_dynamic_settings)
-
-    def select_output_path(self):
-        """
-        Opens a file dialog to select output path for verse output.
-        """
-        current_path = self.output_edit.text()
-        path = get_save_path(self, current_path, self.tr("dialog_path"))
-        if path:
-            self.output_edit.setText(path)
-            self.settings["output_path"] = path
-            ConfigManager.update_partial({"output_path": path})
 
     def toggle_overlay(self):
         """
@@ -309,6 +230,13 @@ class TabSettings(QWidget, TabSettingsUI):
         self.overlay.show()
         log_debug("[TabSettings] overlay turned ON")
 
+    def populate_displays(self):
+        """
+        Populates the display dropdown with available screens.
+        """
+        self.display_combo.clear()
+        self.display_combo.addItems(get_display_descriptions())
+
     def ensure_overlay_on(self):
         """
         Ensures the overlay is active; turns it on if necessary.
@@ -339,54 +267,6 @@ class TabSettings(QWidget, TabSettingsUI):
                 self.overlay.close()
                 self.overlay = None
                 log_debug("[TabSettings] overlay turned OFF due to empty verse")
-
-    def apply_polling_settings(self):
-        """
-        Applies polling interval settings and restarts polling if enabled.
-        """
-        poll_enabled = self.settings.get("poll_enabled", False)
-        poll_interval = self.settings.get("poll_interval", 1000)
-
-        if poll_enabled:
-            if self.poll_timer.isActive():
-                self.poll_timer.stop()
-            self.poll_timer.start(poll_interval)
-            log_debug("[TabSettings] polling restarted")
-            self.poll_file()
-        else:
-            if self.poll_timer.isActive():
-                self.poll_timer.stop()
-            log_debug("[TabSettings] polling stopped")
-            if self.overlay and self.overlay.isVisible():
-                self.overlay.close()
-                self.overlay = None
-                log_debug("[TabSettings] overlay turned OFF due to polling OFF")
-
-    def save_poll_interval(self):
-        """
-        Saves the polling interval for overlay updates.
-
-        Validates that the entered value is an integer.
-        On success, updates the settings and saves them to disk.
-        If invalid, shows a warning message box to the user.
-        """
-        text = self.poll_input.text()
-
-        # Validate input is a valid integer
-        valid, interval = validate_int(text)
-        if not valid:
-            QMessageBox.warning(
-                self, 
-                messages.ERROR_MESSAGES["POLL_INTERVAL_INVALID_TITLE"], 
-                messages.ERROR_MESSAGES["POLL_INTERVAL_INVALID_MSG"]
-            )
-            return
-
-        # Save and persist new interval
-        self.settings["poll_interval"] = interval
-        ConfigManager.save(self.settings)
-        log_debug(f"Saved poll interval: {interval}")
-
 
     def update_presentation_visibility(self):
         """
