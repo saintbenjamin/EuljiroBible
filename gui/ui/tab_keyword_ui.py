@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/ui/tab_keyword_ui.py
-Defines the UI layout and logic hooks for the keyword-based search tab (TabKeyword).
+Defines the UI layout and interaction hooks for the keyword-based search tab in EuljiroBible.
 
 Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
 Affiliated Church: The Eulji-ro Presbyterian Church [대한예수교장로회(통합) 을지로교회]
@@ -14,91 +14,51 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, 
+    QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QComboBox,
-    QTextEdit, QSizePolicy, QTableWidget, 
-    QSplitter, QRadioButton, QButtonGroup
+    QTextEdit, QSizePolicy, QTableView,
+    QSplitter, QRadioButton, QButtonGroup,
+    QHeaderView
 )
 
 from gui.ui.common import create_svg_text_button
 
+
 class TabKeywordUI:
     """
-    Constructs the keyword search tab UI layout.
-
-    Includes version selection, keyword input, search/output/clear buttons,
-    result table, and search summary area.
+    Constructs the visual layout and widget structure for the keyword search tab.
+    Provides controls for version selection, keyword input, search execution,
+    result display, and slide show output.
     """
 
     def init_ui(self, version_list, get_polling_status, get_always_show_setting):
         """
-        Initializes the UI layout and widgets for keyword search.
+        Initializes the UI layout and binds widget events.
 
-        :param version_list: List of available Bible versions
+        :param version_list: List of available Bible version strings
         :type version_list: list[str]
+        :param get_polling_status: Callback for checking polling toggle state
+        :type get_polling_status: Callable[[], bool]
+        :param get_always_show_setting: Callback for checking 'always show' setting
+        :type get_always_show_setting: Callable[[], bool]
         """
         self.get_polling_status = get_polling_status
         self.get_always_show_setting = get_always_show_setting
 
         layout = QVBoxLayout()
 
-        # Bible version selector dropdown
+        # 1. Version dropdown
         self.version_box = QComboBox()
         self.version_box.addItems(version_list)
-
-        # Keyword input box with return key binding
-        self.keyword_input = QLineEdit()
-        self.keyword_input.returnPressed.connect(self.run_search)
-
-        # Search button with SVG icon
-        self.search_button = create_svg_text_button(
-            "resources/svg/btn_search.svg",
-            self.tr("btn_search"),
-            30,
-            "Search",
-            self.run_search
-        )
-
-        # Slide show start button
-        self.select_button = create_svg_text_button(
-            "resources/svg/btn_output.svg",
-            self.tr("btn_output"),
-            30,
-            "Start slide show",
-            self.save_selected_verse
-        )
-
-        # Slide show stop button
-        self.clear_button = create_svg_text_button(
-            "resources/svg/btn_clear.svg",
-            self.tr("btn_clear"),
-            30,
-            "Stop slide show",
-            self.clear_outputs
-        )
-
-        # Summary label and display box
-        self.summary_title_label = QLabel(self.tr("search_summary"))
-        self.summary_box = QTextEdit()
-        self.summary_box.setReadOnly(True)
-        self.summary_box.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
-
-        # Results table with two columns: location, verse
-        self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels([self.tr("search_location"), self.tr("search_verse")])
-        self.table.setColumnWidth(0, 150)
-        self.table.horizontalHeader().setStretchLastSection(True)
-
-        # 1. Bible version selector - first row
         version_row = QHBoxLayout()
         version_row.addWidget(self.version_box)
         layout.addLayout(version_row)
 
-        # 2. Search mode + keyword input + search button - second row
-        search_row = QHBoxLayout()
+        # 2. Keyword input with search mode selection and button
+        self.keyword_input = QLineEdit()
+        self.keyword_input.returnPressed.connect(self.run_search)
 
-        # Radio buttons for selecting search mode
-        self.radio_and = QRadioButton(self.tr("search_mode_all"))       # "All words"
+        self.radio_and = QRadioButton(self.tr("search_mode_all"))  # "All words"
         self.radio_compact = QRadioButton(self.tr("search_mode_compact"))  # "Exact phrase"
         self.radio_and.setChecked(True)
 
@@ -106,25 +66,50 @@ class TabKeywordUI:
         self.radio_group.addButton(self.radio_and)
         self.radio_group.addButton(self.radio_compact)
 
+        self.search_button = create_svg_text_button(
+            "resources/svg/btn_search.svg", self.tr("btn_search"),
+            30, "Search", self.run_search
+        )
+
+        search_row = QHBoxLayout()
         search_row.addWidget(self.radio_and)
         search_row.addWidget(self.radio_compact)
         search_row.addWidget(self.keyword_input)
         search_row.addWidget(self.search_button)
-
         layout.addLayout(search_row)
 
-        # Button layout (select/clear)
+        # 3. Output & Clear buttons
+        self.select_button = create_svg_text_button(
+            "resources/svg/btn_output.svg", self.tr("btn_output"),
+            30, "Start slide show", self.save_selected_verse
+        )
+        self.clear_button = create_svg_text_button(
+            "resources/svg/btn_clear.svg", self.tr("btn_clear"),
+            30, "Stop slide show", self.clear_outputs
+        )
+
         btns = QHBoxLayout()
         self.btns = btns
         btns.addWidget(self.select_button)
         btns.addWidget(self.clear_button)
         layout.addLayout(btns)
 
-        # Splitter for table and summary area
-        splitter = QSplitter(Qt.Vertical)
-        splitter.addWidget(self.table)
+        # 4. Table and summary section
+        self.table = QTableView()
+        self.table.setAlternatingRowColors(True)
+        self.table.setWordWrap(True)
+        self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+        self.table.setEditTriggers(QTableView.EditTrigger.NoEditTriggers)
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table.setStyleSheet("QTableView::item { padding: 6px; }")
+        self.table.doubleClicked.connect(self.on_double_click_save)
 
-        # Bottom container with summary label and box
+        self.summary_title_label = QLabel(self.tr("search_summary"))
+        self.summary_box = QTextEdit()
+        self.summary_box.setReadOnly(True)
+        self.summary_box.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+
         bottom_container = QWidget()
         bottom_layout = QVBoxLayout()
         bottom_layout.setContentsMargins(4, 0, 4, 0)
@@ -132,9 +117,10 @@ class TabKeywordUI:
         bottom_layout.addWidget(self.summary_title_label)
         bottom_layout.addWidget(self.summary_box)
         bottom_container.setLayout(bottom_layout)
-        splitter.addWidget(bottom_container)
 
-        # Set stretch proportions: table (3), summary (1)
+        splitter = QSplitter(Qt.Vertical)
+        splitter.addWidget(self.table)
+        splitter.addWidget(bottom_container)
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 1)
 
@@ -143,16 +129,26 @@ class TabKeywordUI:
 
     def update_button_visibility(self):
         """
-        Show or hide the 'Output' and 'Clear' buttons based on polling status.
+        Toggles the visibility of the Output and Clear buttons.
 
-        Uses global setting `always_show_on_off_buttons` or the toggle state.
+        Visibility is determined by polling status or the 'always show' setting.
         """
-
-        # Check polling or always-show flag
         poll_enabled = self.get_polling_status()
         always_show = self.get_always_show_setting()
         effective_polling = poll_enabled or always_show
 
-        # Adjust button visibility accordingly
         self.select_button.setVisible(effective_polling)
         self.clear_button.setVisible(effective_polling)
+
+    def on_double_click_save(self, index):
+        """
+        Handles double-click event on the result table.
+
+        Delegates the save logic to TabKeywordLogic.
+
+        :param index: Clicked QModelIndex
+        :type index: QModelIndex
+        """
+        if index.column() < 0:
+            return
+        self.logic.save_selected_verse(self)

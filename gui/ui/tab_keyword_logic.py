@@ -13,18 +13,21 @@ License: MIT License with Attribution Requirement (see LICENSE file for details)
 """
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTableWidgetItem, QMessageBox
+from PySide6.QtWidgets import QMessageBox
 
 from core.utils.bible_keyword_searcher import BibleKeywordSearcher
 from core.utils.bible_parser import resolve_book_name
 from core.utils.logger import log_debug
 from core.utils.utils_output import format_output, save_to_files
 
+from gui.utils.keyword_result_model import KeywordResultTableModel
+from gui.utils.keyword_highlight_delegate import KeywordHighlightDelegate
+
 
 class TabKeywordLogic:
     """
     Provides backend logic for keyword-based search, result formatting,
-    and verse saving for the keyword tab.
+    and verse saving for the TabKeyword UI.
     """
 
     def __init__(self, settings, tr_func):
@@ -33,7 +36,7 @@ class TabKeywordLogic:
 
         :param settings: Global application settings
         :type settings: dict
-        :param tr_func: Translation function
+        :param tr_func: Translation function for localized strings
         :type tr_func: Callable[[str], str]
         """
         self.settings = settings
@@ -41,7 +44,7 @@ class TabKeywordLogic:
 
     def run_search(self, parent):
         """
-        Performs a keyword search and updates the result table and summary box.
+        Performs a keyword search and updates the result table and summary.
 
         :param parent: The TabKeyword instance (UI context)
         :type parent: QWidget
@@ -50,102 +53,104 @@ class TabKeywordLogic:
         version = parent.version_box.currentText()
         keywords = parent.keyword_input.text().strip().split()
 
-        # Ensure keyword input is not empty
         if not keywords or all(k == "" for k in keywords):
-            QMessageBox.warning(parent, parent.tr("warn_input_title"), parent.tr("warn_input_msg"))
+            QMessageBox.warning(parent, self.tr("warn_input_title"), self.tr("warn_input_msg"))
             return
 
-        # Determine search mode based on radio button selection
+        # Determine search mode from radio buttons
         mode = "compact" if parent.radio_compact.isChecked() else "and"
 
-        # Execute search using the keyword search engine
+        # Execute search
         searcher = BibleKeywordSearcher(version)
-        results = searcher.search(" ".join(keywords), mode=mode)  # pass mode explicitly
+        results = searcher.search(" ".join(keywords), mode=mode)
         counts = searcher.count_keywords(results, keywords)
 
         parent.update_table(results)
         parent.update_summary(counts)
+
         log_debug(f"[TabKeyword] search results: {len(results)} found")
 
         parent.summary_box.append("")  # add spacing line
-        parent.summary_box.append(f"{parent.tr('total_results_label')} {len(results)}")
+        parent.summary_box.append(f"{self.tr('total_results_label')} {len(results)}")
 
         if not results:
-            QMessageBox.information(parent, parent.tr("info_no_results_title"), parent.tr("info_no_results_msg"))
-
+            QMessageBox.information(parent, self.tr("info_no_results_title"), self.tr("info_no_results_msg"))
 
     def save_selected_verse(self, parent):
         """
-        Saves the currently selected verse in the result table to a file.
+        Saves the currently selected verse in the result table to verse_output.txt.
 
         :param parent: The TabKeyword instance
         :type parent: QWidget
         """
         log_debug("[TabKeyword] save_selected_verse called")
-        row = parent.table.currentRow()
-        if row >= 0:
-            ref = parent.table.item(row, 0).text()
+
+        index = parent.table.currentIndex()
+        row = index.row()
+        if row < 0:
+            QMessageBox.warning(parent, self.tr("warn_selection_title"), self.tr("warn_selection_msg"))
+            return
+
+        model = parent.table.model()
+        ref = model.index(row, 1).data()  # Get reference string like "John 3:16"
+
+        try:
             book_str, chap_verse = ref.rsplit(' ', 1)
             book = resolve_book_name(book_str) or book_str
             chapter, verse = chap_verse.split(':')
             chapter = int(chapter)
             verse = int(verse)
+        except Exception as e:
+            log_debug(f"[TabKeyword] Failed to parse reference: {ref}")
+            QMessageBox.warning(parent, self.tr("warn_selection_title"), self.tr("warn_selection_msg"))
+            return
 
-            # Normalize book ID for dictionary lookup
-            normalized = book.replace(" ", "")
-            version = parent.version_box.currentText()
-            verses = parent.bible_data.get_verses(version)
+        normalized = book.replace(" ", "")
+        version = parent.version_box.currentText()
+        verses = parent.bible_data.get_verses(version)
 
-            book = normalized
-            if book not in verses:
-                for key in verses:
-                    if key.lower().replace(" ", "") == book.lower().replace(" ", ""):
-                        book = key
-                        break
-                else:
-                    log_debug(f"[TabKeyword] Book '{book}' not found in version {version}")
-                    QMessageBox.warning(parent, parent.tr("warn_no_chapter_title"),
-                                        parent.tr("warn_no_chapter_msg").format(normalized, chapter))
-                    return
-
-            # Build formatted output using utility
-            verse_range = (verse, verse)
-            book_alias = parent.bible_data.get_book_alias(parent.current_language)
-            version_alias = parent.bible_data.get_version_alias(parent.current_language)
-
-            merged = format_output(
-                [version],
-                book,
-                str(chapter),
-                verse_range,
-                {version: verses},
-                parent.tr,
-                for_whitebox=True,
-                lang_code=parent.current_language,
-                bible_data=parent.bible_data,
-                book_alias=book_alias,
-                version_alias=version_alias
-            )
-
-            try:
-                save_to_files(merged, parent.settings)
-                log_debug("[TabKeyword] selected verse saved successfully")
-            except Exception as e:
-                QMessageBox.critical(
+        # Normalize book name if needed
+        if normalized not in verses:
+            for key in verses:
+                if key.lower().replace(" ", "") == normalized.lower():
+                    normalized = key
+                    break
+            else:
+                log_debug(f"[TabKeyword] Book '{book}' not found in version {version}")
+                QMessageBox.warning(
                     parent,
-                    parent.tr("error_saving_title"),
-                    parent.tr("error_saving_msg").format(e)
+                    self.tr("warn_no_chapter_title"),
+                    self.tr("warn_no_chapter_msg").format(normalized, chapter)
                 )
-        else:
-            QMessageBox.warning(
-                parent,
-                parent.tr("warn_selection_title"),
-                parent.tr("warn_selection_msg")
-            )
+                return
+
+        verse_range = (verse, verse)
+        book_alias = parent.bible_data.get_book_alias(parent.current_language)
+        version_alias = parent.bible_data.get_version_alias(parent.current_language)
+
+        merged = format_output(
+            [version],
+            normalized,
+            str(chapter),
+            verse_range,
+            {version: verses},
+            self.tr,
+            for_whitebox=True,
+            lang_code=parent.current_language,
+            bible_data=parent.bible_data,
+            book_alias=book_alias,
+            version_alias=version_alias
+        )
+
+        try:
+            save_to_files(merged, parent.settings)
+            log_debug("[TabKeyword] selected verse saved successfully")
+        except Exception as e:
+            QMessageBox.critical(parent, self.tr("error_saving_title"), self.tr("error_saving_msg").format(e))
 
     def clear_outputs(self, parent):
         """
-        Clears all output files by writing an empty string.
+        Clears the verse output file by writing an empty string.
 
         :param parent: TabKeyword instance
         :type parent: QWidget
@@ -154,52 +159,31 @@ class TabKeywordLogic:
 
     def update_table(self, parent, results):
         """
-        Populates the result table with search results.
+        Sets the result table model and installs a keyword highlight delegate.
 
         :param parent: TabKeyword instance
         :type parent: QWidget
-        :param results: List of verse entries with book/chapter/verse/text/highlighted
+        :param results: List of verse entry dictionaries
         :type results: list[dict]
         """
-        parent.table.setRowCount(0)
-        for i, res in enumerate(results):
-            parent.table.insertRow(i)
+        model = KeywordResultTableModel(results, parent.bible_data, parent.current_language, parent.tr)
+        parent.table.setModel(model)
 
-            # Format reference (book + chapter:verse)
-            display_book = parent.bible_data.get_standard_book(res['book'], parent.current_language)
-            ref_item = QTableWidgetItem(f"{display_book} {res['chapter']}:{res['verse']}")
-            ref_item.setFont(parent.table.font())
-            ref_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
-            ref_item.setFlags(ref_item.flags() ^ Qt.ItemFlag.ItemIsEditable)
-            parent.table.setItem(i, 0, ref_item)
+        keywords = parent.keyword_input.text().strip().split()
+        delegate = KeywordHighlightDelegate(keywords)
+        parent.table.setItemDelegateForColumn(2, delegate)
 
-            # Add verse content with highlight info as tooltip
-            item = QTableWidgetItem(res['text'])
-            item.setFont(parent.table.font())
-            item.setToolTip(res['highlighted'])
-            item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-            item.setFlags(item.flags() ^ Qt.ItemFlag.ItemIsEditable)
-            parent.table.setItem(i, 1, item)
-
-        parent.table.setWordWrap(True)
+        parent.table.resizeColumnsToContents()
         parent.table.resizeRowsToContents()
-    
-        # Set padding for cleaner spacing
-        parent.table.setStyleSheet("QTableWidget::item { padding: 6px; }")
-
-        # Ensure content-based height + add breathing room
-        parent.table.resizeRowsToContents()
-        for row in range(parent.table.rowCount()):
-            h = parent.table.rowHeight(row)
-            parent.table.setRowHeight(row, h + 4)
+        parent.table.setStyleSheet("QTableView::item { padding: 6px; }")
 
     def update_summary(self, parent, counts):
         """
-        Updates the keyword usage summary based on search results.
+        Updates the summary box with the count of each keyword found.
 
         :param parent: TabKeyword instance
         :type parent: QWidget
-        :param counts: Dictionary of keyword -> count mappings
+        :param counts: Dictionary mapping keyword → count
         :type counts: dict[str, int]
         """
         parent.summary_box.setPlainText("\n".join(f"{k}: {v}" for k, v in counts.items()))

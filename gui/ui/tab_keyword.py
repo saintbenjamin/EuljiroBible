@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/ui/tab_keyword.py
-Implements the TabKeyword class for EuljiroBible, enabling Bible keyword search, result display, and verse export.
+Implements the TabKeyword class for EuljiroBible, enabling Bible keyword search,
+search result rendering, multilingual updates, and verse output handling.
 
 Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
 Affiliated Church: The Eulji-ro Presbyterian Church [대한예수교장로회(통합) 을지로교회]
@@ -22,118 +23,119 @@ from gui.ui.tab_keyword_ui import TabKeywordUI
 
 class TabKeyword(QWidget, TabKeywordUI):
     """
-    Tab class for performing Bible keyword searches.
+    GUI tab class for Bible keyword searching.
 
-    Displays results in a table, allows verse export, and supports multilingual UI updates.
+    Provides multilingual keyword search, result table display,
+    summary box update, and verse export functionality.
     """
 
-    def __init__(self, version_list, settings, tr, get_polling_status=None, get_always_show_setting=None):
+    def __init__(self, version_list, settings, tr,
+                 get_polling_status=None, get_always_show_setting=None):
         """
-        Initialize the keyword tab UI and logic layer.
+        Initialize the TabKeyword UI, logic, and Bible data.
 
-        :param version_list: List of available Bible versions
+        :param version_list: Available Bible version list
         :type version_list: list[str]
-        :param settings: Shared user settings
+        :param settings: Application-level settings
         :type settings: dict
-        :param tr: Translation function for multilingual UI
+        :param tr: Translation function for UI labels
         :type tr: Callable[[str], str]
+        :param get_polling_status: Optional callback to get polling state
+        :type get_polling_status: Callable[[], bool] or None
+        :param get_always_show_setting: Optional callback for always-show-button toggle
+        :type get_always_show_setting: Callable[[], bool] or None
         """
         super().__init__()
-        self.tr = tr                          # Translation function for labels
-        self.settings = settings              # Loaded application configuration
-        self.current_language = "ko"          # Default language
-        self.bible_data = BibleDataLoader()   # Bible version and book metadata
+        self.tr = tr
+        self.settings = settings
+        self.current_language = "ko"
+        self.bible_data = BibleDataLoader()
+        self.logic = TabKeywordLogic(settings, tr)
 
-        self.logic = TabKeywordLogic(settings, tr)  # Search and logic backend
-
+        # Inject fallback functions if not provided
         self.get_polling_status = get_polling_status or self.get_polling_status
         self.get_always_show_setting = get_always_show_setting or self.get_always_show_setting
 
+        # Build layout
         self.init_ui(
             version_list=version_list,
-            get_polling_status=get_polling_status or self.get_polling_status,
-            get_always_show_setting=get_always_show_setting or self.get_always_show_setting
-        )     # Construct layout
+            get_polling_status=self.get_polling_status,
+            get_always_show_setting=self.get_always_show_setting
+        )
 
     def change_language(self, lang_code):
         """
-        Dynamically update all UI elements for the specified language.
+        Update UI text and placeholder strings according to selected language.
 
-        :param lang_code: Target language code ('ko' or 'en')
+        :param lang_code: Language code ('ko', 'en', etc.)
         :type lang_code: str
         """
         self.current_language = lang_code
         self.messages = load_messages(lang_code)
 
-        # Update placeholder and all text labels
+        # Update all visible UI elements
         self.radio_and.setText(self.tr("search_mode_all"))
         self.radio_compact.setText(self.tr("search_mode_compact"))
         self.keyword_input.setPlaceholderText(self.tr("search_keyword_hint"))
         self.search_button.setText(self.tr("btn_search"))
         self.select_button.setText(self.tr("btn_output"))
         self.clear_button.setText(self.tr("btn_clear"))
-        self.table.setHorizontalHeaderLabels([self.tr("search_location"), self.tr("search_verse")])
         self.summary_title_label.setText(self.tr("search_summary"))
         self.summary_box.setPlaceholderText(self.tr("search_summary"))
 
     def run_search(self):
         """
-        Triggers a keyword search using current input and version.
-
-        Delegates to `TabKeywordLogic.run_search()`.
+        Trigger a keyword search using the logic backend.
         """
         self.logic.run_search(self)
 
     def save_selected_verse(self):
         """
-        Saves the currently selected verse in the result table to output file.
-
-        Delegates to `TabKeywordLogic.save_selected_verse()`.
+        Save the currently selected verse to verse_output.txt
+        for overlay usage or exporting.
         """
         self.logic.save_selected_verse(self)
 
     def clear_outputs(self):
         """
-        Clears the saved verse output file and display fields.
-
-        Delegates to `TabKeywordLogic.clear_outputs()`.
+        Clear the verse output file and reset summary/preview fields.
         """
         self.logic.clear_outputs(self)
 
     def update_table(self, results):
         """
-        Updates the table widget with new search results.
+        Update the keyword result table with new entries.
 
-        :param results: List of search result entries
+        :param results: List of result dictionaries
         :type results: list[dict]
         """
         self.logic.update_table(self, results)
 
     def update_summary(self, counts):
         """
-        Displays keyword count summary in the summary box.
+        Update the summary box with keyword occurrence counts.
 
-        :param counts: Mapping of keyword -> hit count
+        :param counts: Keyword → count dictionary
         :type counts: dict[str, int]
         """
         self.logic.update_summary(self, counts)
 
     def get_polling_status(self):
         """
-        Returns the current polling toggle state.
-        This method should be overridden or injected externally.
+        Return the current polling toggle state.
+        Overridable callback for external control.
 
-        :return: True if polling is enabled, False otherwise.
+        :return: True if polling is active
         :rtype: bool
         """
-        return False  # Default fallback, should be replaced by actual callback
+        return False
 
     def get_always_show_setting(self):
         """
-        Returns the current 'always show buttons' setting.
-        This method should be overridden or injected externally.
+        Return the current 'always show buttons' setting.
+        Overridable callback for external control.
 
-        :return: True if always show is enabled, False otherwise.
+        :return: True if buttons are always shown
         :rtype: bool
         """
-        return False  # Default fallback, should be replaced by actual callback
+        return False
