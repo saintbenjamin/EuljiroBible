@@ -15,22 +15,27 @@ based on user interface widget states, especially overlay-related UI components.
 
 def update_overlay_settings(settings, widget_overlays):
     """
-    Updates the given settings dictionary with current values from overlay-related UI widgets.
+    Update the given settings dictionary with current values from overlay-related UI widgets.
 
     Args:
-        settings (dict): The settings dictionary to be updated.
-        widget_overlays (dict): A dictionary of UI widgets used for overlay settings.
-            Expected keys:
-                - "font_combo" (QComboBox or QFontComboBox): Font family selector
-                - "size_combo" (QComboBox): Font size selector
-                - "weight_combo" (QComboBox): Font weight selector
-                - "alpha_slider" (QSlider): Background transparency slider
-                - "text_color_btn" (QPushButton): Text color preview button
-                - "bg_color_btn" (QPushButton): Background color preview button
-                - "mode_combo" (QComboBox): Overlay mode selector ("fullscreen" or "resizable")
+        settings (dict):
+            Settings dictionary to be updated.
+
+        widget_overlays (dict):
+            Dictionary of UI widgets used for overlay settings.
+
+            Expected keys include:
+            font_combo (QComboBox or QFontComboBox),
+            size_combo (QComboBox),
+            weight_combo (QComboBox),
+            alpha_slider (QSlider),
+            text_color_btn (QPushButton),
+            bg_color_btn (QPushButton),
+            mode_combo (QComboBox; values: "fullscreen" or "resizable").
 
     Returns:
-        dict: The updated settings dictionary with overlay display configurations.
+        dict:
+            Updated settings dictionary containing overlay display configuration.
     """
     font_family = widget_overlays["font_family_combo"].currentText()
     font_size = int(widget_overlays["font_size_combo"].currentText())
