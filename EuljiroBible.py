@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible.py
+File: EuljiroBible/EuljiroBible.py
 
 Main launcher script for the GUI version of EuljiroBible.
 
