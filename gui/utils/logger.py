@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: gui/utils/gui_logger.py
+
 Provides GUI-specific logging helpers for EuljiroBible, including error dialog and log viewer.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

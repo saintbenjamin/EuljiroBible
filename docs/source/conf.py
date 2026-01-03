@@ -63,6 +63,8 @@ html_static_path = ["_static"] if os.path.isdir(_static_dir) else []
 # - Other optional deps can be added here if autodoc fails due to missing packages.
 autodoc_mock_imports = [
     "PySide6",
+    "qdarkstyle",
+    "psutil"
 ]
 
 # Keep output stable and readable
@@ -85,12 +87,3 @@ napoleon_include_special_with_doc = True
 
 # Reduce noisy warnings if you want (optional)
 # nitpicky = False
-
-# ---------------------------------------------------------------------------
-# Autodoc configuration
-# ---------------------------------------------------------------------------
-autodoc_mock_imports = [
-    "PySide6",
-    "qdarkstyle",
-    "psutil"
-]

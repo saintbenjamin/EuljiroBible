@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/utils/keyword_result_model.py
+
 Provides a QAbstractTableModel for displaying Bible keyword search results.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

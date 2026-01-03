@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/utils/overlay_factory.py
+
 Provides a factory function to instantiate the WidgetOverlay using
 current settings and display geometry.
 

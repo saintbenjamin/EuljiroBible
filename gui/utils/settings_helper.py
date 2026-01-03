@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/utils/settings_helper.py
+
 Provides helper functions for extracting and updating settings
 based on user interface widget states, especially overlay-related UI components.
 

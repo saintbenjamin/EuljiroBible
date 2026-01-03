@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/utils/utils_dialog.py
+
 Provides helper functions for GUI dialogs such as color selection and file save location.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

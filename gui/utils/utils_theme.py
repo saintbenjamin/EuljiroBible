@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/utils/utils_theme.py
+
 Handles theme switching and dynamic layout refresh for EuljiroBible GUI components.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

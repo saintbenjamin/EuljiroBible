@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 File: EuljiroBible/gui/utils/ui_restore.py
+
 Restores user settings into the main window UI components.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
