@@ -85,3 +85,12 @@ napoleon_include_special_with_doc = True
 
 # Reduce noisy warnings if you want (optional)
 # nitpicky = False
+
+# ---------------------------------------------------------------------------
+# Autodoc configuration
+# ---------------------------------------------------------------------------
+autodoc_mock_imports = [
+    "PySide6",
+    "qdarkstyle",
+    "psutil"
+]
