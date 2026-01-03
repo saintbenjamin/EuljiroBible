@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/tab_verse_selection_manager.py
+
 Handles version selection and book/chapter dropdown synchronization in the TabVerse panel.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

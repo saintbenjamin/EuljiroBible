@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/tab_verse_logic.py
+
 Provides logic for verse display, saving, and verse shifting for the TabVerse UI.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

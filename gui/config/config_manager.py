@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/config/config_manager.py
+
 Handles loading, saving, and updating user settings for EuljiroBible GUI.
 Includes utility for font selection and safe default fallback for corrupted or missing settings.
 

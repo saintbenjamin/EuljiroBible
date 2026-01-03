@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/widget_overlay.py
-Description: Defines an overlay widget for displaying Bible verses in EuljiroBible.
+
+Defines an overlay widget for displaying Bible verses in EuljiroBible.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
 :Affiliated Church: The Eulji-ro Presbyterian Church [대한예수교장로회(통합) 을지로교회]

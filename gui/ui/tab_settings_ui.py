@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/tab_settings_ui.py
+
 Initializes the Settings tab UI for configuring fonts, themes, display output, and overlay behavior.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

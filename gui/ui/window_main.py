@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/window_main.py
-Description: Defines the main application window for EuljiroBible, managing tabs, settings, language switching, overlay handling, and polling controls.
+
+Defines the main application window for EuljiroBible, managing tabs, settings, language switching, overlay handling, and polling controls.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
 :Affiliated Church: The Eulji-ro Presbyterian Church [대한예수교장로회(통합) 을지로교회]

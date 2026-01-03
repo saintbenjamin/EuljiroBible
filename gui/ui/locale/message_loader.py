@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/locale/message_loader.py
-Description: Provides multi-language UI message dictionaries and a function to load messages by language code for EuljiroBible.
+
+Provides multi-language UI message dictionaries and a function to load messages by language code for EuljiroBible.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
 :Affiliated Church: The Eulji-ro Presbyterian Church [대한예수교장로회(통합) 을지로교회]

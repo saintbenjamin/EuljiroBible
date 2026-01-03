@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/core/utils/bible_parser.py
+
 Parses Bible reference strings and resolves book name aliases from user input.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

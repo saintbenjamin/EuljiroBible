@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/core/utils/utils_version.py
+
 Provides utility to refresh and sort available Bible versions based on loaded metadata.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

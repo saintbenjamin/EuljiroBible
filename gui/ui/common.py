@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/common.py
+
 Provides reusable UI widgets such as buttons, checkboxes, and loading indicator.
 Includes utility wrappers for QPushButton creation with SVG icons and dynamic sizing.
 

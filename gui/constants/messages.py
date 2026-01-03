@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/constants/messages.py
+
 Centralized error message constants for user-facing dialogs in EuljiroBible.
 Intended for reuse across GUI modules to maintain consistency and easy localization.
 

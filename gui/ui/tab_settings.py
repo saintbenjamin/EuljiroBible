@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 :File: EuljiroBible/gui/ui/tab_settings.py
+
 Implements the TabSettings class for managing application fonts, overlay behavior, polling, and output path configuration.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
