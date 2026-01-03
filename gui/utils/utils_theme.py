@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/utils_theme.py
+:File: EuljiroBible/gui/utils/utils_theme.py
 
 Handles theme switching and dynamic layout refresh for EuljiroBible GUI components.
 

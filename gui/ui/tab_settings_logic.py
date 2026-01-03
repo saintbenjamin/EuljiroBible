@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/tab_settings_logic.py
+:File: EuljiroBible/gui/ui/tab_settings_logic.py
 Handles backend logic for the settings tab: dynamic UI updates, file paths, colors, and polling behavior.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: gui/gui_main.py
+:File: gui/gui_main.py
 
 GUI environment setup and main launcher logic for EuljiroBible.
 Initializes QApplication, verifies environment, loads settings, and launches the main window.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/launch.py
+:File: EuljiroBible/gui/launch.py
 
 Launches the EuljiroBible application by initializing settings and opening the main window.
 

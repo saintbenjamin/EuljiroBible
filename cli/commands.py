@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/cli/commands.py
+:File: EuljiroBible/cli/commands.py
 
 CLI command handler for EuljiroBible.
 

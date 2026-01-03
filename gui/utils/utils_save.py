@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/utils_save.py
+:File: EuljiroBible/gui/utils/utils_save.py
 
 Handles saving of user settings from the GUI state at exit.
 

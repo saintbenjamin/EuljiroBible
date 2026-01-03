@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/tab_verse_ui.py
+:File: EuljiroBible/gui/ui/tab_verse_ui.py
 Builds the TabVerse UI layout and handles basic input/output interactions.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

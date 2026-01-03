@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/utils_env.py
+:File: EuljiroBible/gui/utils/utils_env.py
 
 Configures and validates environment settings required for GUI display (e.g. WSL compatibility).
 

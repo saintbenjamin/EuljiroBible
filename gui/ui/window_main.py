@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/window_main.py
+:File: EuljiroBible/gui/ui/window_main.py
 Description: Defines the main application window for EuljiroBible, managing tabs, settings, language switching, overlay handling, and polling controls.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

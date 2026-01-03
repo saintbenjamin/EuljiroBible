@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: gui/utils/gui_logger.py
+:File: gui/utils/gui_logger.py
 
 Provides GUI-specific logging helpers for EuljiroBible, including error dialog and log viewer.
 

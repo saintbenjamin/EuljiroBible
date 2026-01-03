@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/utils/file_helpers.py
+:File: EuljiroBible/core/utils/file_helpers.py
 Provides utility functions for evaluating file-based overlay display conditions.
 Primarily used to determine whether the verse output file contains valid content
 that warrants triggering the overlay display.

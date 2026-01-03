@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/tab_verse.py
+:File: EuljiroBible/gui/ui/tab_verse.py
 Implements the TabVerse class for verse lookup, navigation, display, and output.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

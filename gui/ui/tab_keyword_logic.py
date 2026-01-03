@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/tab_keyword_logic.py
+:File: EuljiroBible/gui/ui/tab_keyword_logic.py
 Handles the keyword search, result display, and verse saving logic for the TabKeyword UI.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/utils/bible_keyword_searcher.py
+:File: EuljiroBible/core/utils/bible_keyword_searcher.py
 Performs keyword-based search on Bible text files for EuljiroBible.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

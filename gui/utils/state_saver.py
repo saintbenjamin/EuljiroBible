@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/state_saver.py
+:File: EuljiroBible/gui/utils/state_saver.py
 
 Provides utility functions to save application settings from the UI state in EuljiroBible.
 

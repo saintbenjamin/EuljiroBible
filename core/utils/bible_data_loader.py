@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/utils/bible_data_loader.py
+:File: EuljiroBible/core/utils/bible_data_loader.py
 Handles lazy loading and caching of Bible text and metadata from JSON sources.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/utils_validation.py
+:File: EuljiroBible/gui/utils/utils_validation.py
 
 Validates presence of Bible data files necessary to launch the GUI properly.
 

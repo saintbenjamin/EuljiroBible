@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/cli/cli_main.py
+:File: EuljiroBible/cli/cli_main.py
 
 Command-line entry point for the EuljiroBible CLI interface.
 

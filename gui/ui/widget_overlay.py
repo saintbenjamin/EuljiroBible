@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/widget_overlay.py
+:File: EuljiroBible/gui/ui/widget_overlay.py
 Description: Defines an overlay widget for displaying Bible verses in EuljiroBible.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
@@ -178,7 +178,7 @@ class WidgetOverlay(QWidget):
                 return f.read().strip()
         except Exception as e:
             log_error_with_dialog(e)
-            log_error_with_dialog(f"[WidgetOverlay.read_verse_file] Failed to read verse file: {self.verse_path}")
+            log_error_with_dialog(f"[WidgetOverlay.read_verse_file] Failed to read verse :File: {self.verse_path}")
             return None
 
     def reload_text(self):

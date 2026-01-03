@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/utils_display.py
+:File: EuljiroBible/gui/utils/utils_display.py
 
 Provides utility functions for listing display screen descriptions in EuljiroBible.
 

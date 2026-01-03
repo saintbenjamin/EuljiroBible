@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/keyword_highlight_delegate.py
+:File: EuljiroBible/gui/utils/keyword_highlight_delegate.py
 
 Provides a QStyledItemDelegate that highlights specified keywords in red
 within a QTextDocument, supporting HTML formatting and line wrapping.

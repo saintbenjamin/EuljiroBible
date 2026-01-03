@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/monitor_memory.py
+:File: EuljiroBible/gui/ui/monitor_memory.py
 Popup window to monitor current memory usage periodically.
 Logs to file and provides GUI interface for checking memory in real time.
 

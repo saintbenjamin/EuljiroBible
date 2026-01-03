@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/verse_output_handler.py
+:File: EuljiroBible/gui/utils/verse_output_handler.py
 
 Handles text display and file saving for formatted Bible verses in the GUI.
 

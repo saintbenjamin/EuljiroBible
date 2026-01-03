@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/tab_keyword_ui.py
+:File: EuljiroBible/gui/ui/tab_keyword_ui.py
 Defines the UI layout and interaction hooks for the keyword-based search tab in EuljiroBible.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

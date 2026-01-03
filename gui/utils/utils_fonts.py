@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/utils/utils_fonts.py
+:File: EuljiroBible/gui/utils/utils_fonts.py
 
 Provides utility functions for managing fonts across the GUI and overlay in EuljiroBible.
 

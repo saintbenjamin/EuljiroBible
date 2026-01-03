@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/utils/verse_version_helper.py
+:File: EuljiroBible/core/utils/verse_version_helper.py
 Performs logic for managing selected Bible versions and computing shared books.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin

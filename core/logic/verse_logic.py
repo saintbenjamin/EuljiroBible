@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/logic/verse_logic.py
+:File: EuljiroBible/core/logic/verse_logic.py
 
 Provides core logic for verse reference parsing, formatting, and display.
 

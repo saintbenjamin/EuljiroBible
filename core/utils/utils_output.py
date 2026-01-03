@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/utils/utils_output.py
+:File: EuljiroBible/core/utils/utils_output.py
 Provides functions for formatting Bible verses and saving them atomically
 to output files for EuljiroBible. Handles both GUI and CLI output logic.
 

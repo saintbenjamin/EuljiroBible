@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/core/utils/input_validators.py
+:File: EuljiroBible/core/utils/input_validators.py
 Provides input validation utilities for form fields and user input processing.
 Used to check integer values with optional range constraints.
 

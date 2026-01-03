@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/locale/message_loader.py
+:File: EuljiroBible/gui/ui/locale/message_loader.py
 Description: Provides multi-language UI message dictionaries and a function to load messages by language code for EuljiroBible.
 
 :Author: Benjamin Jaedon Choi - https://github.com/saintbenjamin
@@ -117,7 +117,7 @@ DEFAULT_MESSAGES = {
     "error_loading_title": "Loading Error",
     "error_loading_msg": "Error loading {0}:\n{1}",
     "error_saving_title": "Save Error",
-    "error_saving_msg": "Error saving file:\n{0}",
+    "error_saving_msg": "Error saving :File:\n{0}",
     "error_saving_msg_path": "Error saving file at {0}:\n{1}",
     "error_set_saving_title": "Settings Save Error",
     "error_set_saving_msg": "Error saving settings:\n{0}",

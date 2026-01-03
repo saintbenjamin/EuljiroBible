@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-File: EuljiroBible/gui/ui/tab_keyword.py
+:File: EuljiroBible/gui/ui/tab_keyword.py
 Implements the TabKeyword class for EuljiroBible, enabling Bible keyword search,
 search result rendering, multilingual updates, and verse output handling.
 
