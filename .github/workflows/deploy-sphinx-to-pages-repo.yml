@@ -44,6 +44,6 @@ jobs:
           cd pages_repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add EuljiroWorship
+          git add EuljiroBible
           git commit -m "Update EuljiroBible docs" || echo "No changes to commit"
           git push
