@@ -1,7 +1,7 @@
-gui.ui.locale
+gui.constants
 =============
 
 .. toctree::
    :maxdepth: 7
 
-   gui.ui.locale.message_loader
+   gui.constants.messages
