@@ -51,7 +51,7 @@ class TabVerse(QWidget, TabVerseUI):
         enter_state (int): Enter-key state machine (0 = ready to display, 1 = ready to export).
         use_alias (bool): Whether to display version aliases instead of full version names.
 
-    Notes:
+    Note:
         The following callables are intentionally omitted from ``Attributes`` to avoid duplicate autodoc entries, as they are already documented as class methods:
 
         - get_polling_status (Callable[[], bool]): Callback returning the current polling toggle state.
