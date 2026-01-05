@@ -33,10 +33,9 @@ class TabKeyword(QWidget, TabKeywordUI):
         current_language (str): Current UI language code (e.g., "ko", "en").
         bible_data (BibleDataLoader): Bible data loader instance used by this tab.
         logic (TabKeywordLogic): Backend logic handler for search and export actions.
-        get_polling_status (Callable[[], bool]): Callback returning current polling state.
-        get_always_show_setting (Callable[[], bool]): Callback returning current
-            "always show buttons" toggle state.
     """
+        # get_polling_status (Callable[[], bool]): Callback returning current polling state.
+        # get_always_show_setting (Callable[[], bool]): Callback returning current "always show buttons" toggle state.
 
     def __init__(self, version_list, settings, tr,
                  get_polling_status=None, get_always_show_setting=None):

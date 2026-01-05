@@ -41,8 +41,6 @@ class TabSettings(QWidget, TabSettingsUI):
         settings (dict): Shared application settings dictionary (loaded and persisted via ConfigManager).
         verse_path (str): Path to the verse output file used by polling/overlay logic.
         poll_timer (QTimer): Timer that periodically triggers polling of the verse output file.
-        get_main_geometry (Callable[[], QRect]): Callback returning the main window geometry
-            used to determine which screen is the "main" display.
         refresh_settings_callback (Callable[[], None]): Callback invoked when settings should be refreshed
             outside of this tab.
         get_poll_enabled (Callable[[], bool]): Callback returning whether polling is enabled externally.
@@ -50,6 +48,7 @@ class TabSettings(QWidget, TabSettingsUI):
         overlay_denied (bool): Flag indicating the user denied overlay usage on single-display setups.
         logic (TabSettingsLogic): Backend logic handler for applying UI-driven settings changes.
     """
+        # get_main_geometry (Callable[[], QRect]): Callback returning the main window geometry used to determine which screen is the "main" display.
 
     def __init__(self, app, settings, tr, get_poll_enabled_callback=None, get_main_geometry=None, refresh_settings_callback=None):
         """

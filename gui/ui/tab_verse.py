@@ -50,10 +50,9 @@ class TabVerse(QWidget, TabVerseUI):
         formatted_verse_text (str): Most recently formatted verse output (used for Enter key flow).
         enter_state (int): Enter-key state machine (0 = ready to display, 1 = ready to export).
         use_alias (bool): Whether to display version aliases instead of full version names.
-        get_polling_status (Callable[[], bool]): Callback returning current polling toggle state.
-        get_always_show_setting (Callable[[], bool]): Callback returning current
-            "always show buttons" toggle state.
     """
+        # get_polling_status (Callable[[], bool]): Callback returning current polling toggle state.
+        # get_always_show_setting (Callable[[], bool]): Callback returning current "always show buttons" toggle state.
 
     def __init__(self, version_list, settings, tr, get_polling_status=None, get_always_show_setting=None):
         """
