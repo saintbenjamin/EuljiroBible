@@ -30,6 +30,26 @@ import os
 import sys
 import platform
 
+# ───── Base and resource directories ─────
+#: Absolute path to the project root directory.
+#:
+#: This path is resolved differently depending on the execution context:
+#:
+#: - When running as a frozen PyInstaller executable, this is set to the
+#:   directory containing the executable.
+#: - When running from source (CLI or GUI), this is dynamically determined
+#:   by traversing upward from the current file location until a directory
+#:   containing ``core/`` is found.
+#:
+#: All other project paths are derived from this base directory.
+BASE_DIR = None
+
+#: Base directory for bundled resources.
+#:
+#: When frozen (PyInstaller), this points to the extracted resource
+#: directory (``sys._MEIPASS``). Otherwise, it is the same as ``BASE_DIR``.
+RESOURCE_DIR = None
+
 # Determine BASE_DIR depending on execution context
 if getattr(sys, 'frozen', False):
     # Case 1: PyInstaller-built executable
@@ -48,29 +68,64 @@ else:
 
     RESOURCE_DIR = BASE_DIR
 
-# Determine the icon resource directory
+#: Icon resource directory.
+#:
+#: On Windows, this uses ``.../gui/resources/icons`` (``.ico`` files).
+#: On other systems, it uses ``.../gui/resources/svg`` (``.svg`` files).
 ICON_DIR = os.path.join(
     RESOURCE_DIR, "gui", "resources",
     "icons" if platform.system() == "Windows" else "svg"
 )
 
-# Paths to various project resource folders and files
+# ───── Project data and JSON directories ─────
+#: Directory containing Bible version JSON data files (typically ``data/``).
 BIBLE_DATA_DIR = os.path.join(BASE_DIR, "data")
+
+#: Directory containing JSON configs and settings (typically ``json/``).
 JSON_DIR = os.path.join(BASE_DIR, "json")
+
+#: Directory containing Bible name/version alias JSON files
+#: (typically ``json/bible/``).
 BIBLE_NAME_DIR = os.path.join(JSON_DIR, "bible")
+
+#: Directory containing translation JSON files
+#: (typically ``json/translations/``).
 TRANSLATION_DIR = os.path.join(JSON_DIR, "translations")
 
+# ───── Icon file ─────
+#: Application icon file path.
+#:
+#: On Windows, this is typically ``thepck.ico``; on other systems,
+#: ``thepck.svg``.
 ICON_FILE = os.path.join(
     ICON_DIR,
     "thepck.ico" if platform.system() == "Windows" else "thepck.svg"
 )
+
+# ───── Logs and settings ─────
+#: Main application settings JSON file (typically ``json/settings.json``).
 SETTINGS_FILE = os.path.join(JSON_DIR, "settings.json")
+
+#: Runtime error log file path (typically ``BASE_DIR/error_log.txt``).
 LOG_FILE = os.path.join(BASE_DIR, "error_log.txt")
+
+#: Memory diagnostics log file path
+#: (typically ``BASE_DIR/memory_log.txt``).
 MEMORY_LOG_FILE = os.path.join(BASE_DIR, "memory_log.txt")
 
-# Bible version and book alias mapping files
+# ───── Bible alias/config files ─────
+#: GUI Bible version alias mapping JSON file.
 ALIASES_VERSION_FILE = os.path.join(BIBLE_NAME_DIR, "aliases_version.json")
+
+#: CLI Bible version alias mapping JSON file
+#: (simplified aliases for CLI parsing).
 ALIASES_VERSION_CLI_FILE = os.path.join(BIBLE_NAME_DIR, "aliases_version_cli.json")
+
+#: Book name alias mapping JSON file.
 ALIASES_BOOK_FILE = os.path.join(BIBLE_NAME_DIR, "aliases_book.json")
+
+#: Canonical book list JSON file used as the standard reference.
 STANDARD_BOOK_FILE = os.path.join(BIBLE_NAME_DIR, "standard_book.json")
+
+#: Custom book sort order JSON file.
 SORT_ORDER_FILE = os.path.join(BIBLE_NAME_DIR, "your_sort_order.json")
