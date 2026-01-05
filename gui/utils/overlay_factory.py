@@ -14,15 +14,22 @@ current settings and display geometry.
 
 def create_overlay(settings, geometry, parent=None):
     """
-    Creates an WidgetOverlay instance using the provided settings and screen geometry.
+    Create and return a configured overlay widget instance.
+
+    This factory function constructs a `WidgetOverlay` using the current
+    overlay-related settings and the target screen geometry. It centralizes
+    overlay creation logic so that callers do not need to manually extract
+    individual style parameters from the settings dictionary.
 
     Args:
-        settings (dict): Settings dictionary containing overlay style configurations.
-        geometry (QRect): Geometry of the screen on which to display the overlay.
-        parent (QWidget, optional): Optional parent widget for the overlay.
+        settings (dict): Application settings dictionary containing overlay-related keys,
+            such as font family, font size, colors, transparency, and display mode.
+        geometry (QRect): Screen geometry defining the initial size and position
+            of the overlay window.
+        parent (QWidget | None): Optional parent widget for ownership and stacking context.
 
     Returns:
-        WidgetOverlay: A fully configured and ready-to-show overlay widget.
+        WidgetOverlay: A fully initialized overlay widget ready to be shown.
     """
     from gui.ui.widget_overlay import WidgetOverlay
 

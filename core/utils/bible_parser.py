@@ -9,6 +9,24 @@
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
 Parses Bible reference strings and resolves book name aliases from user input.
+
+This module provides lightweight parsing utilities for converting
+user-entered Bible reference strings into structured components
+(book ID, chapter, verse range).
+
+Key responsibilities:
+
+- Resolve book name aliases into canonical internal IDs
+- Parse flexible reference formats such as:
+
+    - "요 3"
+    - "요한복음 3:16"
+    - "John 3:14-16"
+
+- Support chapter-only references and full verse ranges
+
+The parser is intentionally permissive and designed for use in
+both CLI and GUI contexts.
 """
 
 import re
@@ -28,18 +46,32 @@ except Exception as e:
 
 def resolve_book_name(name: str, lang_map: dict = None, lang_code: str = "ko") -> str | None:
     """
-    Resolve a user-provided book name (alias or standard) to the canonical internal ID.
+    Resolve a user-provided book name to a canonical internal book ID.
 
-    This version supports:
-    - Strict alias matching from BOOK_ALIASES
-    - Reverse matching for canonical names
-    - Normalized comparison (lowercase, remove spaces/dots)
-    - Optional fallback to standard_book name mapping if provided
+    This function attempts resolution using multiple strategies:
 
-    :param name: Raw book name from user input (e.g., "요삼", "1Jn", "Genesis")
-    :param lang_map: Optional standard_book.json dict (key → { "ko": ..., "en": ... })
-    :param lang_code: Language key for matching standard book names (default: "ko")
-    :return: Canonical book ID (e.g., "3John"), or None if not found
+    1. Direct alias matching from ``BOOK_ALIASES``
+    2. Reverse matching against canonical IDs
+    3. Optional fallback using localized names from :py:data:`core.config.paths.STANDARD_BOOK_FILE`
+
+    All comparisons are performed using normalized strings
+    (lowercased, whitespace and dot characters removed).
+
+    Args:
+        name (str):
+            Raw book name from user input
+            (e.g., "요삼", "1Jn", "Genesis").
+        lang_map (dict, optional):
+            Mapping loaded from `standard_book.json`,
+            structured as { book_id: { "ko": ..., "en": ... } }.
+        lang_code (str, optional):
+            Language key used when matching localized names.
+            Defaults to "ko".
+
+    Returns:
+        str | None:
+            Canonical internal book ID (e.g., "3John"),
+            or None if no match is found.
     """
     if not name:
         return None
@@ -70,15 +102,33 @@ def resolve_book_name(name: str, lang_map: dict = None, lang_code: str = "ko") -
 
 def parse_reference(text: str):
     """
-    Parse a Bible verse reference string into structured components.
+    Parse a Bible reference string into structured components.
 
-    The expected input format is:
-        "<book> <chapter>:<start_verse>-<end_verse>"
-        Examples: "요 3" "요한복음 3:16", "John 3:14-16"
+    Supported input formats include:
+        - "<book> <chapter>"
+        - "<book> <chapter>:<verse>"
+        - "<book> <chapter>:<start>-<end>"
 
-    :param text: The reference string entered by the user
-    :return: Tuple of (book_id, chapter_number, list of verses) or None if invalid
-    :rtype: tuple[str, int, list[int]] | None
+    Examples:
+
+        - "요 3"
+        - "요한복음 3:16"
+        - "John 3:14-16"
+
+    If only a chapter is provided, the verse range is interpreted
+    as the full chapter.
+
+    Args:
+        text (str):
+            Raw reference string entered by the user.
+
+    Returns:
+        tuple[str, int, tuple[int, int]] | None:
+            A tuple of ``(book_id, chapter_number, verse_range)``,
+            where ``verse_range`` is ``(start, end)`` and ``end == -1``
+            indicates the full chapter.
+
+            Returns None if parsing or resolution fails.
     """
     text = text.strip()
 

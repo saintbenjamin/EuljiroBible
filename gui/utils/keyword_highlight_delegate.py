@@ -8,8 +8,8 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Provides a QStyledItemDelegate that highlights specified keywords in red
-within a QTextDocument, supporting HTML formatting and line wrapping.
+Provides a `QStyledItemDelegate` that highlights specified keywords in red
+within a `QTextDocument`, supporting HTML formatting and line wrapping.
 """
 
 from PySide6.QtWidgets import QStyledItemDelegate, QStyle
@@ -18,29 +18,44 @@ from PySide6.QtCore import QPoint
 
 class KeywordHighlightDelegate(QStyledItemDelegate):
     """
-    Custom delegate to render keyword search results with highlighted terms
-    using QTextDocument for HTML and multiline support.
+    Item delegate that highlights keywords in keyword-search result cells.
 
-    :param keywords: List of keywords to highlight
-    :type keywords: list[str]
-    :param parent: Optional parent QWidget
-    :type parent: QWidget | None
+    This delegate renders cell text via QTextDocument so that:
+
+    - HTML formatting (keyword spans) is supported
+    - multiline text is wrapped and drawn correctly
+    - selected-row background rendering remains consistent with Qt styles
+
+    Attributes:
+        keywords (list[str]): Keywords to highlight. Each keyword is highlighted by
+            wrapping exact string matches in an HTML <span> with a colored style.
     """
 
     def __init__(self, keywords, parent=None):
+        """
+        Initialize the delegate.
+
+        Args:
+            keywords (list[str]): List of keywords to highlight.
+            parent (QWidget | None): Optional parent widget.
+        """
         super().__init__(parent)
         self.keywords = keywords  # list[str]
 
     def paint(self, painter, option, index):
         """
-        Renders the cell with HTML-formatted text, highlighting keywords.
+        Paint the table cell using HTML rendering with keyword highlights.
 
-        :param painter: QPainter object used for rendering
-        :type painter: QPainter
-        :param option: Styling options for the item
-        :type option: QStyleOptionViewItem
-        :param index: Index of the model item
-        :type index: QModelIndex
+        This method:
+
+        - draws the row background (selected vs non-selected)
+        - converts the model text into highlighted HTML
+        - uses QTextDocument to render HTML with wrapping inside the cell rectangle
+
+        Args:
+            painter (QPainter): Painter used to draw the item.
+            option (QStyleOptionViewItem): Style options for the item.
+            index (QModelIndex): Model index for the item being painted.
         """
         text = index.data()
         if not text:
@@ -71,13 +86,16 @@ class KeywordHighlightDelegate(QStyledItemDelegate):
 
     def _highlight_keywords(self, text):
         """
-        Escapes HTML in the text and wraps matching keywords with red-colored spans.
-        Also converts newline characters to <br> for HTML rendering.
+        Convert plain text into HTML with keyword highlights.
 
-        :param text: The original verse text
-        :type text: str
-        :return: HTML-formatted string with <span> wrapped keywords
-        :rtype: str
+        This escapes HTML-sensitive characters, converts newlines to <br>,
+        and wraps each keyword occurrence with an HTML <span> marker.
+
+        Args:
+            text (str): Original cell text.
+
+        Returns:
+            str: HTML-formatted string with highlighted keywords.
         """
         # Escape HTML-sensitive characters
         escaped_text = (

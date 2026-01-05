@@ -16,12 +16,22 @@ from gui.config.config_manager import ConfigManager
 
 def set_color_from_dialog(button, setting_key, callback=None):
     """
-    Opens QColorDialog, updates button color, saves to settings, and runs callback.
+    Open a color picker dialog and apply the selected color to a button and settings.
+
+    This utility:
+
+    - Opens a QColorDialog for user selection.
+    - Updates the button background to reflect the chosen color.
+    - Persists the color value to settings via ConfigManager.
+    - Optionally triggers a callback (commonly used to reapply dynamic settings).
 
     Args:
-        button (QPushButton): The button to update the background color of.
-        setting_key (str): Settings dictionary key to update.
-        callback (function, optional): Function to call after color is applied.
+        button (QPushButton): Button whose background color represents the setting.
+        setting_key (str): Settings key to update with the selected color value.
+        callback (Callable | None): Optional function to invoke after applying the color.
+
+    Returns:
+        None
     """
     color = QColorDialog.getColor()
     if color.isValid():
@@ -32,16 +42,19 @@ def set_color_from_dialog(button, setting_key, callback=None):
 
 def get_save_path(parent, current_path, title, file_filter="Text Files (*.txt)"):
     """
-    Opens a file dialog and returns the selected save path.
+    Open a file-save dialog and return the selected path.
+
+    This helper wraps QFileDialog.getSaveFileName() and is used to select
+    output paths such as verse_output.txt.
 
     Args:
-        parent (QWidget): Parent widget for dialog.
-        current_path (str): Initial path.
-        title (str): Dialog title.
-        file_filter (str): File type filter string.
+        parent (QWidget): Parent widget for the file dialog.
+        current_path (str): Initial path shown in the dialog.
+        title (str): Dialog window title.
+        file_filter (str): File type filter string (Qt format).
 
     Returns:
-        str: Selected path or empty string if cancelled.
+        str: Selected file path, or an empty string if the dialog was cancelled.
     """
     path, _ = QFileDialog.getSaveFileName(parent, title, current_path, file_filter)
     return path

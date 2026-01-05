@@ -8,10 +8,38 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
+
 Command-line entry point for the EuljiroBible CLI interface.
 
-This module parses command-line arguments and delegates
-the logic to the CLI command engine.
+This module provides a minimal command dispatcher for the CLI. It parses
+``sys.argv`` and routes execution to the appropriate command handler.
+
+Supported commands:
+
+- ``bible``: Bible lookup / verse output workflow handled by
+  :func:`cli.commands.run_bible_command`.
+- ``search``: Keyword search workflow handled by
+  :func:`cli.commands.run_search_command`.
+
+Dispatch behavior:
+
+- If no arguments are provided, this module calls ``run_bible_command([])``,
+  which is expected to display CLI usage and available versions.
+- If the first token is an unknown command, this module falls back to treating
+  the entire argument list as a ``bible`` command. This preserves a simple UX
+  where users can type version/book references directly without explicitly
+  prefixing ``bible``.
+
+Note:
+    - This module intentionally keeps parsing and routing logic small. Command semantics, validation, I/O, and user-facing messages belong in :mod:`cli.commands`.
+    - CLI error messages are expected to be English-only by project convention.
+
+Example:
+    Typical usage patterns::
+
+        $ bible NKRV John 3:16
+        $ bible search NKRV "God so loved"
+        $ bible NKRV John 3:16   # falls back to 'bible' command
 """
 
 import sys
@@ -22,7 +50,18 @@ def main():
     """
     Main entry point for the CLI version of EuljiroBible.
 
-    Parses arguments from the command line and executes the relevant logic.
+    This function reads command-line arguments from ``sys.argv`` and dispatches
+    execution to the appropriate command handler.
+
+    Behavior:
+        - No arguments: show default Bible command usage (delegated).
+        - First argument is ``bible``: dispatch to :func:`cli.commands.run_bible_command`.
+        - First argument is ``search``: dispatch to :func:`cli.commands.run_search_command`.
+        - Otherwise: fallback to :func:`cli.commands.run_bible_command` with the
+          full argument list.
+
+    Returns:
+        None
     """
     args = sys.argv[1:]  # Exclude the script name itself
 

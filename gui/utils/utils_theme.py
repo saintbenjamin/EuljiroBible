@@ -15,11 +15,19 @@ import qdarkstyle
 
 def set_dark_mode(app, enable: bool):
     """
-    Applies or removes the application's dark theme.
+    Enable or disable the application-wide dark theme.
+
+    This helper applies a Qt stylesheet for dark mode when enabled and
+    restores the default (light) appearance when disabled. It operates
+    directly on the QApplication instance.
 
     Args:
-        app (QApplication): QApplication instance.
-        enable (bool): True to apply dark theme, False to revert.
+        app (QApplication): QApplication instance to which the theme is applied.
+        enable (bool): If True, apply the dark theme; if False, clear the stylesheet
+            and revert to the default theme.
+
+    Returns:
+        None
     """
     if enable:
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyside6())

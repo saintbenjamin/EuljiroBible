@@ -19,15 +19,41 @@ from core.utils.logger import log_debug
 
 def setup_environment():
     """
-    Sets Qt environment variables for scaling on HiDPI or fractional displays.
+    Configure Qt-related environment variables for display scaling.
+
+    This function sets explicit Qt environment variables to ensure predictable
+    behavior on HiDPI or fractional-scaling displays. It is intended to be called
+    early in application startup, before creating the QApplication instance.
+
+    Effects:
+        - Disables implicit scale-factor guessing by Qt.
+        - Forces consistent scaling behavior across platforms.
+
+    Returns:
+        None
     """
     os.environ["QT_SCALE_FACTOR"] = "1"
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
 def verify_wsl_display():
     """
-    Ensures DISPLAY environment variable is set when running under WSL.
-    Exits the app with a user-friendly message if not configured correctly.
+    Verify DISPLAY environment configuration when running under WSL.
+
+    On Windows Subsystem for Linux (WSL), a valid X server and DISPLAY variable
+    are required to launch Qt GUI applications. This function detects a WSL
+    environment and terminates the application with a user-friendly error dialog
+    if DISPLAY is not configured.
+
+    Behavior:
+        - Detects WSL via kernel release string.
+        - Shows a localized error message using the GUI error handler.
+        - Exits the application with a non-zero status on failure.
+
+    Returns:
+        None
+
+    Raises:
+        SystemExit: If DISPLAY is missing under WSL.
     """
     if "microsoft" in platform.uname().release.lower() and not os.environ.get("DISPLAY"):
         log_debug('Checking DISPLAY environment for WSL.')

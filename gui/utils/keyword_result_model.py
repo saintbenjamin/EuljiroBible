@@ -15,20 +15,32 @@ from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 
 class KeywordResultTableModel(QAbstractTableModel):
     """
-    QAbstractTableModel implementation for Bible keyword search results.
+    Table model for displaying Bible keyword search results.
 
-    This model provides three columns:
-    0. Row number
-    1. Book + chapter:verse (with localized alias)
-    2. Verse text
+    This QAbstractTableModel exposes a fixed 3-column table:
+        0) Row index number (1-based)
+        1) Localized reference string: "<Book> <chapter>:<verse>"
+        2) Verse text
 
-    :param results: List of verse dictionaries
-    :param bible_data: BibleDataLoader instance for resolving book aliases
-    :param current_language: Language code (e.g., 'ko', 'en') for localization
-    :param tr: Translation function
+    Attributes:
+        results (list[dict]): List of search result entries. Each entry is expected to
+            contain at least: "book", "chapter", "verse", and "text".
+        bible_data (BibleDataLoader): Data loader used to resolve localized/standard
+            book display names.
+        language (str): Active language code used for localization (e.g., "ko", "en").
+        tr (Callable[[str], str]): Translation function for header labels and UI text.
     """
 
     def __init__(self, results, bible_data, current_language, tr):
+        """
+        Initialize the model with results and localization helpers.
+
+        Args:
+            results (list[dict] | None): Search results to display. If None, an empty list is used.
+            bible_data (BibleDataLoader): Bible data loader used for book-name localization.
+            current_language (str): Language code for localized book names (e.g., "ko", "en").
+            tr (Callable[[str], str]): Translation function for localized header strings.
+        """
         super().__init__()
         self.results = results or []
         self.bible_data = bible_data
@@ -37,34 +49,45 @@ class KeywordResultTableModel(QAbstractTableModel):
 
     def rowCount(self, parent=QModelIndex()):
         """
-        Returns the number of rows in the model.
+        Return the number of rows in the table.
 
-        :param parent: QModelIndex (not used)
-        :return: Row count
+        Args:
+            parent (QModelIndex): Unused Qt parent index.
+
+        Returns:
+            int: Number of result rows.
         """
         return len(self.results)
 
     def columnCount(self, parent=QModelIndex()):
         """
-        Returns the number of columns in the model.
+        Return the number of columns in the table.
 
-        Columns:
-        0 - Index number
-        1 - Reference (book + chapter:verse)
-        2 - Verse text
+        The model always returns 3 columns:
+            0 - Row index number
+            1 - Reference (localized book + chapter:verse)
+            2 - Verse text
 
-        :param parent: QModelIndex (not used)
-        :return: Column count (always 3)
+        Args:
+            parent (QModelIndex): Unused Qt parent index.
+
+        Returns:
+            int: Always 3.
         """
         return 3
 
     def data(self, index, role=Qt.DisplayRole):
         """
-        Returns the data for a given cell in the model.
+        Return cell data for the given index and role.
 
-        :param index: QModelIndex specifying row and column
-        :param role: Qt item role (only DisplayRole is handled)
-        :return: Display string for the given index
+        Only Qt.DisplayRole is handled. Other roles return None.
+
+        Args:
+            index (QModelIndex): Model index indicating the target cell.
+            role (int): Qt item data role.
+
+        Returns:
+            str | None: Display string for the cell, or None if not applicable.
         """
         if not index.isValid():
             return None
@@ -85,12 +108,17 @@ class KeywordResultTableModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role):
         """
-        Returns the header labels for columns.
+        Return header labels for the table.
 
-        :param section: Column index
-        :param orientation: Qt.Horizontal or Qt.Vertical
-        :param role: Qt item role
-        :return: Header label string or None
+        Only Qt.DisplayRole with Qt.Horizontal orientation is handled.
+
+        Args:
+            section (int): Column index.
+            orientation (Qt.Orientation): Header orientation.
+            role (int): Qt item data role.
+
+        Returns:
+            str | None: Header label for the given column, or None if not applicable.
         """
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return ["", self.tr("search_location"), self.tr("search_verse")][section]

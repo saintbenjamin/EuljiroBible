@@ -8,7 +8,7 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Implements the TabSettings class for managing application fonts, overlay behavior, polling, and output path configuration.
+Implements the :class:`gui.ui.tab_settings.TabSettings` class for managing application fonts, overlay behavior, polling, and output path configuration.
 """
 
 from PySide6.QtCore import QTimer, QCoreApplication
@@ -26,22 +26,48 @@ from gui.utils.utils_theme import set_dark_mode
 
 class TabSettings(QWidget, TabSettingsUI):
     """
-    Provides the UI and logic for application settings including fonts, themes,
-    overlay display configuration, file output path, and polling mechanism.
+    Settings tab widget for configuring application behavior and overlay display.
+
+    This tab provides UI and orchestration for user-adjustable settings such as
+    fonts, theme mode, overlay display configuration, output file path selection,
+    and the polling mechanism that monitors the verse output file.
+
+    Most per-feature operations are delegated to TabSettingsLogic, while this class
+    coordinates the Qt timer, overlay window lifecycle, and language refresh.
+
+    Attributes:
+        tr (Callable[[str], str]): Translation function for UI labels and messages.
+        app (QApplication): Qt application instance used for theme changes and global styling.
+        settings (dict): Shared application settings dictionary (loaded and persisted via ConfigManager).
+        verse_path (str): Path to the verse output file used by polling/overlay logic.
+        poll_timer (QTimer): Timer that periodically triggers polling of the verse output file.
+        get_main_geometry (Callable[[], QRect]): Callback returning the main window geometry
+            used to determine which screen is the "main" display.
+        refresh_settings_callback (Callable[[], None]): Callback invoked when settings should be refreshed
+            outside of this tab.
+        get_poll_enabled (Callable[[], bool]): Callback returning whether polling is enabled externally.
+        overlay (QWidget | None): Active overlay window instance when enabled; otherwise None.
+        overlay_denied (bool): Flag indicating the user denied overlay usage on single-display setups.
+        logic (TabSettingsLogic): Backend logic handler for applying UI-driven settings changes.
     """
 
     def __init__(self, app, settings, tr, get_poll_enabled_callback=None, get_main_geometry=None, refresh_settings_callback=None):
         """
-        Initializes the settings tab with provided context.
+        Initialize the settings tab with application context and user settings.
 
-        :param app: QApplication instance
-        :type app: QApplication
-        :param settings: Shared settings dictionary
-        :type settings: dict
-        :param tr: Translation function
-        :type tr: Callable[[str], str]
-        :param get_poll_enabled_callback: Optional polling state checker
-        :type get_poll_enabled_callback: Callable or None
+        This sets up the polling timer, installs optional callbacks, initializes the
+        logic backend, and builds the UI.
+
+        Args:
+            app (QApplication): QApplication instance.
+            settings (dict): Shared settings dictionary.
+            tr (Callable[[str], str]): Translation function for UI labels.
+            get_poll_enabled_callback (Callable[[], bool] | None): Optional callback that returns
+                whether polling is enabled externally.
+            get_main_geometry (Callable[[], QRect] | None): Optional callback that returns the main
+                window geometry used for screen selection logic.
+            refresh_settings_callback (Callable[[], None] | None): Optional callback invoked when
+                settings should be refreshed outside this tab.
         """
         super().__init__()
         self.tr = tr
@@ -66,10 +92,13 @@ class TabSettings(QWidget, TabSettingsUI):
 
     def change_language(self, lang_code):
         """
-        Updates all labels and buttons to reflect a new language setting.
+        Update all labels and buttons to reflect a new language setting.
 
-        :param lang_code: Language code (e.g. 'ko', 'en')
-        :type lang_code: str
+        This updates visible UI text, persists the selected language in settings,
+        and writes the change through ConfigManager.
+
+        Args:
+            lang_code (str): Language code (e.g., "ko", "en").
         """
         self.current_language = lang_code
         self.messages = load_messages(lang_code)
@@ -102,36 +131,71 @@ class TabSettings(QWidget, TabSettingsUI):
         ConfigManager.update_partial({"last_language": lang_code})
 
     def apply_dynamic_settings(self):
-        """Applies all dynamic settings through logic module."""
+        """
+        Apply all dynamic settings through the logic module.
+
+        This delegates to TabSettingsLogic to apply the current UI selections to the
+        application and persisted settings.
+        """
         self.logic.apply_dynamic_settings(self)
 
     def apply_font_to_children(self, widget, font):
-        """Applies font to all child widgets recursively."""
+        """
+        Apply a font to child widgets recursively.
+
+        Args:
+            widget (QWidget): Root widget whose children should receive the font.
+            font (QFont): Font to apply.
+        """
         self.logic.apply_font_to_children(self)
 
     def select_text_color(self):
-        """Opens color dialog to select text color."""
+        """
+        Open a color picker dialog to select the display text color.
+
+        This delegates to TabSettingsLogic, which updates both UI previews and persisted settings.
+        """
         self.logic.select_text_color(self)
 
     def select_bg_color(self):
-        """Opens color dialog to select background color."""
+        """
+        Open a color picker dialog to select the display background color.
+
+        This delegates to TabSettingsLogic, which updates both UI previews and persisted settings.
+        """
         self.logic.select_bg_color(self)
 
     def select_output_path(self):
-        """Opens file browser to select output path."""
+        """
+        Open a file browser dialog to select the verse output path.
+
+        This delegates to TabSettingsLogic, which validates and stores the selected path.
+        """
         self.logic.select_output_path(self)
 
     def apply_polling_settings(self):
-        """Applies polling settings and restarts polling if enabled."""
+        """
+        Apply polling settings and restart polling if enabled.
+
+        This delegates to TabSettingsLogic to validate the polling interval, update settings,
+        and start/stop the polling timer as needed.
+        """
         self.logic.apply_polling_settings(self)
 
     def save_poll_interval(self, parent):
-        """Saves polling interval value from UI."""
+        """
+        Save the polling interval value from the UI.
+
+        This delegates to TabSettingsLogic, which validates the input and persists it.
+        """
         self.logic.save_poll_interval(self)
 
     def toggle_theme(self):
         """
-        Toggles between dark and light application themes.
+        Toggle between dark and light application themes.
+
+        This flips the current theme state, applies the stylesheet accordingly, updates
+        the settings dictionary, and persists the change via :class:`gui.config.config_manager.ConfigManager`.
         """
         log_debug("[TabSettings] toggle_theme called")
         enable = not bool(self.app.styleSheet())
@@ -150,8 +214,17 @@ class TabSettings(QWidget, TabSettingsUI):
 
     def toggle_overlay(self):
         """
-        Turns the overlay display on or off based on its current state.
-        Uses screen geometry logic to determine placement.
+        Toggle the overlay display on or off.
+
+        When enabling, this determines the target screen geometry based on the current
+        overlay mode (fullscreen vs resizable), screen count, and the main window
+        geometry. When disabling, it closes the active overlay window.
+
+        This method also respects a user-denial flag for single-display setups.
+
+        Note:
+            - In fullscreen mode, the overlay prefers a secondary monitor if available.
+            - In resizable mode, the overlay uses the user-selected display index.
         """
         log_debug("[TabSettings] toggle_overlay called")
 
@@ -204,20 +277,34 @@ class TabSettings(QWidget, TabSettingsUI):
         log_debug("[TabSettings] overlay turned ON")
 
     def get_main_geometry(self):
+        """
+        Return the main window geometry.
+
+        This is a stub fallback used when no external callback is injected. Call sites
+        should inject a real geometry provider so overlay placement logic can determine
+        the primary screen reliably.
+
+        Returns:
+            QRect: Geometry of the main window (fallback is a zero rect).
+        """
         print("get_main_geometry internally called")
         from PySide6.QtCore import QRect
         return QRect(0, 0, 0, 0)
 
     def populate_displays(self):
         """
-        Fills the display dropdown with screen descriptions.
+        Populate the display dropdown with available screen descriptions.
+
+        This clears the display combo box and fills it with human-readable display names.
         """
         self.display_combo.clear()
         self.display_combo.addItems(get_display_descriptions())
 
     def ensure_overlay_on(self):
         """
-        Ensures the overlay is visible, enabling it if necessary.
+        Ensure the overlay window is visible, enabling it if necessary.
+
+        If overlay usage was previously denied by the user, this does nothing.
         """
         if getattr(self, "overlay_denied", False):
             log_debug("[TabSettings] ensure_overlay_on skipped: previously denied")
@@ -228,7 +315,13 @@ class TabSettings(QWidget, TabSettingsUI):
 
     def poll_file(self):
         """
-        Periodically checks the verse output file and controls overlay visibility.
+        Poll the verse output file and control overlay visibility.
+
+        If polling is disabled, any active overlay is closed. If polling is enabled,
+        the overlay is shown when the verse output file indicates content should be
+        displayed, and hidden when the output is empty.
+
+        This method is intended to be called periodically by poll_timer.
         """
         if not self.settings.get("poll_enabled", False):
             if self.overlay and self.overlay.isVisible():
@@ -248,9 +341,11 @@ class TabSettings(QWidget, TabSettingsUI):
 
     def update_presentation_visibility(self):
         """
-        Shows or hides the overlay configuration group based on polling or always-show setting.
-        """
+        Update visibility of the overlay configuration group.
 
+        Visibility is determined by the effective polling state, defined as:
+        polling enabled OR the "always show on/off buttons" setting enabled.
+        """
         self.settings["always_show_on_off_buttons"] = self.always_on_off_checkbox.isChecked()
 
         always_on = self.settings.get("always_show_on_off_buttons", False)

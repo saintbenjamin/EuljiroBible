@@ -13,11 +13,20 @@ Restores user settings into the main window UI components.
 
 def restore_settings_to_ui(win, settings):
     """
-    Applies saved settings to the main window's UI components.
+    Restore persisted settings into the main window UI.
+
+    This function applies previously saved user settings (typically loaded from the
+    settings store at startup) to the active UI widgets. It focuses on restoring
+    state that helps the user resume where they left off, such as the last selected
+    book/chapter/verse and any optional display toggles that exist on the verse tab.
 
     Args:
-        win (MainWindow): The main window instance.
-        settings (dict): Loaded user settings.
+        win (MainWindow): Main window instance that owns the tab widget and all
+            child tabs.
+        settings (dict): Settings dictionary loaded from the configuration store.
+
+    Returns:
+        None
     """
     try:
         # --- Restore TabVerse ---

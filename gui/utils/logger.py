@@ -20,13 +20,24 @@ from core.config import paths
 
 def log_error_with_dialog(parent, exception: Exception, title="Error", extra_message=None):
     """
-    Logs an error and shows a GUI message box to the user with an option to view the error log.
+    Log an exception and show a critical dialog with an optional "View Error Log" action.
+
+    This helper is intended for GUI-safe error reporting:
+
+    - Always writes the exception to the application error log via `log_error()`.
+    - Shows a QMessageBox with the error text (and optional extra context).
+    - If the user selects "View Error Log", opens a `MonitorErrorLog` window.
 
     Args:
-        parent (QWidget): The parent widget for the QMessageBox.
-        exception (Exception): The exception object to log and display.
-        title (str): The title of the message box.
-        extra_message (str, optional): Additional context to show in the message box.
+        parent (QWidget | None): Parent widget for the QMessageBox and log viewer window.
+            If None, a standalone log viewer window is created.
+        exception (Exception): The exception instance to log and present to the user.
+        title (str): Dialog window title.
+        extra_message (str | None): Optional context string shown above the exception message.
+            Use this to explain what the app was trying to do when the error occurred.
+
+    Returns:
+        None
     """
     log_error(exception)
 
@@ -64,22 +75,48 @@ def log_error_with_dialog(parent, exception: Exception, title="Error", extra_mes
 
 def handle_exception(exception, title="Error", user_message=None, parent=None):
     """
-    Shortcut to log and show exception with dialog. Can be used globally in GUI.
+    Handle an exception by logging it and showing a GUI dialog.
+
+    This is a convenience wrapper around `log_error_with_dialog()` for use across the GUI.
+    Use this when you want a single call site that:
+
+    - logs the exception
+    - displays a user-facing message (optional)
+    - keeps consistent dialog titles
 
     Args:
-        exception (Exception): The exception to handle.
-        title (str): Dialog title.
-        user_message (str): Optional message for user context.
-        parent (QWidget, optional): Parent widget.
+        exception (Exception): The exception instance to handle.
+        title (str): Dialog window title.
+        user_message (str | None): Optional, user-friendly context message shown in the dialog.
+        parent (QWidget | None): Parent widget for the dialog (and log viewer if opened).
+
+    Returns:
+        None
     """
     log_error_with_dialog(parent, exception, title=title, extra_message=user_message)
 
 class MonitorErrorLog(QWidget):
     """
-    A window that displays the contents of the application error log file.
+    GUI window that displays the contents of the application's error log file.
+
+    This viewer is used by error dialogs to let the user inspect `paths.LOG_FILE`
+    without leaving the application. It renders the full file into a read-only QTextEdit.
+
+    Attributes:
+        text_edit (QTextEdit): Read-only text area showing the error log content.
+        close_button (QPushButton): Button to close the window.
     """
 
     def __init__(self, parent=None):
+        """
+        Initialize the error log viewer window and load current log contents.
+
+        Args:
+            parent (QWidget | None): Optional parent widget.
+
+        Returns:
+            None
+        """
         super().__init__(parent)
         self.setWindowTitle("Error Log")
         self.resize(700, 500)
@@ -99,7 +136,14 @@ class MonitorErrorLog(QWidget):
 
     def load_log(self):
         """
-        Loads and displays the error log content in the text edit field.
+        Load `paths.LOG_FILE` and display its contents in the viewer text area.
+
+        Behavior:
+        - If the log file does not exist, the viewer stays empty.
+        - Any read failure is logged via `log_error()` (no dialog recursion).
+
+        Returns:
+            None
         """
         try:
             if os.path.exists(paths.LOG_FILE):

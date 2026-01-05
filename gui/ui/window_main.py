@@ -30,20 +30,58 @@ from gui.ui.tab_settings import TabSettings
 
 class WindowMain(QMainWindow):
     """
-    Main application window class for EuljiroBible.
+    Main application window for EuljiroBible.
 
-    Manages the main interface, including tabs for verse search, keyword search, settings,
-    as well as language switching, overlay control, and polling behavior.
+    This window hosts the primary tab-based interface, including:
+
+    - Verse lookup and export (TabVerse)
+    - Keyword search and export (TabKeyword)
+    - Settings and overlay configuration (TabSettings)
+
+    It also manages global UI behaviors such as:
+
+    - Language switching (menu-driven)
+    - Polling enable/disable toggle and propagation to tabs
+    - About/help actions
+    - Optional memory monitor window
+
+    Attributes:
+        settings (dict): Current settings dictionary (reloaded as needed via ConfigManager).
+        app_version (str): Application version string displayed in the title and About dialog.
+
+        current_language (str): Active UI language code (e.g., "ko", "en").
+        messages (dict): Loaded translation dictionary for the active language.
+
+        help_menu (QMenu): Help menu container (About action).
+        tools_menu (QMenu): Tools menu container (memory monitor, test error).
+        lang_menu (QMenu | None): Language selection menu if languages are available.
+
+        about_action (QAction): Opens the About dialog.
+        memory_action (QAction): Opens the memory monitor window.
+        test_error_action (QAction): Triggers a controlled error for testing.
+
+        poll_toggle_btn (QPushButton): Global polling toggle button (checkable).
+            When enabled, export/clear controls become available and polling-dependent
+            UI elements are shown where applicable.
+        tabs (QTabWidget): Tab widget hosting the main UI tabs.
+        tab_verse (TabVerse): Verse lookup tab instance.
+        tab_keyword (TabKeyword): Keyword search tab instance.
+        tab_settings (TabSettings): Settings tab instance.
+
+        copyright_label (QLabel): Footer label showing copyright/license text.
+        monitor_window (MonitorMemory | None): Memory monitor window instance when opened.
     """
 
     def __init__(self, version_list, settings, icon_path, app_version, parent=None):
         """
-        Initializes the WindowMain.
+        Initialize the main window and construct menus, tabs, and global controls.
 
         Args:
-            version_list (list): List of available Bible versions.
-            settings (dict): Loaded user settings.
-            icon_path (str): Path to the application icon file.
+            version_list (list): List of available Bible version identifiers for the verse/keyword tabs.
+            settings (dict): Loaded user settings dictionary.
+            icon_path (str): Path to the application icon file (provided by caller).
+            app_version (str): Application version string.
+            parent (QWidget | None): Optional parent widget.
         """
         super().__init__()
 
@@ -158,22 +196,25 @@ class WindowMain(QMainWindow):
 
     def tr(self, key):
         """
-        Translates a UI key into the current language.
+        Translate a UI key using the currently loaded language messages.
 
         Args:
             key (str): Translation key.
 
         Returns:
-            str: Translated string.
+            str: Translated string if found; otherwise the key itself.
         """
         return self.messages.get(key, key)
 
     def change_language(self, lang_code):
         """
-        Changes the UI language dynamically.
+        Translate a UI key using the currently loaded language messages.
 
         Args:
-            lang_code (str): Language code (e.g., "ko", "en").
+            key (str): Translation key.
+
+        Returns:
+            str: Translated string if found; otherwise the key itself.
         """
         self.current_language = lang_code
         self.messages = load_messages(lang_code)
@@ -228,6 +269,15 @@ class WindowMain(QMainWindow):
         ConfigManager.update_partial({"last_language": lang_code})
 
     def refresh_settings_and_tabs(self):
+        """
+        Reload settings from ConfigManager and refresh polling-dependent tab UI.
+
+        This is used after settings changes to ensure:
+
+        - verse tab button layout is updated
+        - keyword tab output button visibility is updated
+        - settings tab overlay group visibility is updated
+        """
         self.settings = ConfigManager.load()
         self.tab_verse.update_button_layout()
         self.tab_keyword.update_button_visibility()
@@ -235,9 +285,9 @@ class WindowMain(QMainWindow):
 
     def apply_tab_icons(self):
         """
-        Applies SVG icons to each tab in the tab widget, unless on macOS.
+        Apply tab icons to the QTabWidget (skipped on macOS).
 
-        On macOS, tab icons are skipped due to style inconsistencies in Qt rendering.
+        On macOS, icons are intentionally omitted due to Qt style inconsistencies.
         """
         if platform.system() == "Darwin":
             return
@@ -248,7 +298,9 @@ class WindowMain(QMainWindow):
 
     def update_poll_button_text(self):
         """
-        Updates the polling toggle button text based on polling state.
+        Update the polling toggle button label and icon.
+
+        The button reflects the current checked state and uses localized labels.
         """
         if self.poll_toggle_btn.isChecked():
             self.poll_toggle_btn.setText(self.tr("toggle_btn_poll_enabled"))
@@ -260,12 +312,14 @@ class WindowMain(QMainWindow):
 
     def on_poll_toggle_clicked(self):
         """
-        Handles the polling toggle button click event.
+        Handle clicks on the polling toggle button.
 
-        - Saves polling state to config.
-        - Updates tab_settings.
-        - Applies/restarts polling.
-        - Updates toggle button text and version tab button layout.
+        This persists the new polling state and propagates it across tabs by:
+
+        - saving poll_enabled to ConfigManager
+        - updating settings tab polling behavior (start/stop/restart timer logic)
+        - updating button label/icon
+        - updating verse/keyword tab button visibility/layout
         """
         poll_enabled = self.poll_toggle_btn.isChecked()
         ConfigManager.update_partial({"poll_enabled": poll_enabled})
@@ -277,7 +331,9 @@ class WindowMain(QMainWindow):
 
     def show_about(self):
         """
-        Displays the About dialog.
+        Show the About dialog.
+
+        The dialog content is localized and includes the current application version.
         """
         QMessageBox.about(
             self,
@@ -287,7 +343,9 @@ class WindowMain(QMainWindow):
 
     def open_monitor_memory(self):
         """
-        Opens the real-time memory monitor window.
+        Open the real-time memory monitor window.
+
+        This reads the refresh interval from settings and launches MonitorMemory.
         """
         settings = ConfigManager.load()
         interval = settings.get("memory_interval_sec", 5)
@@ -296,8 +354,9 @@ class WindowMain(QMainWindow):
 
     def trigger_error(self):
         """
-        Deliberately triggers a ZeroDivisionError for testing error handling.
-        Used to validate logging and critical error dialogs.
+        Trigger a controlled exception to test error handling.
+
+        This is intended for validating logging and critical error dialog behavior.
         """
         try:
             x = 1 / 0
@@ -307,10 +366,16 @@ class WindowMain(QMainWindow):
 
     def closeEvent(self, event):
         """
-        Handles cleanup and settings saving before application closes.
+        Handle application close events and persist UI state.
+
+        This attempts to:
+
+        - apply dynamic settings (fonts/overlay) before exit
+        - save UI-derived settings to disk
+        - close any active overlay window owned by the settings tab
 
         Args:
-            event (QCloseEvent): The close event.
+            event (QCloseEvent): Close event.
         """
         try:
             tab_verse = self.tabs.widget(0)

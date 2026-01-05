@@ -19,12 +19,12 @@ from core.utils.utils_output import format_output
 
 def parse_verse_range(verse_text, version, book, chapter, bible_data):
     """
-    Parses a verse input string and returns a (start, end) tuple.
+    Parses a verse input string and returns a ``(start, end)`` tuple.
 
-    Supports formats like "1", "3-5", or blank input (interpreted as full chapter).
+    Supports formats like `"1"`, `"3-5"`, or blank input (interpreted as full chapter).
 
     Args:
-        verse_text (str): Raw input like "1", "4-6", or "".
+        verse_text (str): Raw input like ``"1"``, ``"4-6"``, or ``""``.
         version (str): Bible version key.
         book (str): Internal book name key.
         chapter (int): Chapter number.
@@ -70,7 +70,7 @@ def shift_verse_value(current_verse: int, delta: int, max_verse: int) -> int:
 
     Args:
         current_verse (int): Current verse number.
-        delta (int): +1, -1, etc.
+        delta (int): ``+1``, ``-1``, etc.
         max_verse (int): Maximum valid verse in chapter.
 
     Returns:

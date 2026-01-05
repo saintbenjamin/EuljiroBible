@@ -22,16 +22,19 @@ from gui.config.config_manager import ConfigManager
 
 def create_app_font(family: str, size: int, weight_value: int) -> QFont:
     """
-    Creates a QFont instance with the given settings.
-    Converts int weight to QFont.Weight safely.
+    Create a QFont instance from the given font configuration.
+
+    This helper converts an integer weight into a ``QFont.Weight`` safely,
+    falling back to ``QFont.Weight.Normal`` if the value is invalid.
 
     Args:
-        family (str): Font family name (e.g., "Noto Sans").
+        family (str): Font family name (e.g., ``"Noto Sans"``).
         size (int): Font point size.
-        weight_value (int): Integer weight value (e.g., 50, 75).
+        weight_value (int): Integer weight value compatible with ``QFont.Weight``
+            (e.g., ``50``, ``75``).
 
     Returns:
-        QFont: Configured QFont instance.
+        QFont: Configured font instance with antialias preference enabled.
     """
     font = QFont(family, size)
     font.setStyleStrategy(QFont.PreferAntialias)
@@ -45,9 +48,20 @@ def create_app_font(family: str, size: int, weight_value: int) -> QFont:
 
 def load_application_settings(app):
     """
-    Loads saved font settings from settings file and applies to QApplication.
+    Load persisted application font settings and apply them to QApplication.
 
-    If loading fails, a fallback font is applied and exception is logged.
+    This function reads the settings JSON file and applies the saved font family,
+    size, and weight to the given ``QApplication`` instance.
+
+    Failure behavior:
+    - If loading or parsing fails, a GUI-safe error dialog is shown via
+      ``handle_exception`` and the application continues (Qt default font remains).
+
+    Args:
+        app (QApplication): The QApplication instance to configure.
+
+    Returns:
+        None
     """
     try:
         with open(paths.SETTINGS_FILE, encoding="utf-8") as f:
@@ -63,11 +77,17 @@ def load_application_settings(app):
 
 def apply_font_to_children(widget, font):
     """
-    Recursively applies the given font to the specified widget and all its child widgets.
+    Apply a font recursively to a widget and all of its descendants.
+
+    This is used to ensure consistent font appearance across widgets that do not
+    automatically update after ``QApplication.setFont()`` on some platforms.
 
     Args:
-        widget (QWidget): The root widget to apply the font to.
-        font (QFont): The font to apply.
+        widget (QWidget): Root widget to apply the font to.
+        font (QFont): Font to apply.
+
+    Returns:
+        None
     """
     widget.setFont(font)
     for child in widget.findChildren(QWidget):
@@ -75,13 +95,22 @@ def apply_font_to_children(widget, font):
 
 def apply_main_font_to_app(font_family, font_size, font_weight, root_widget):
     """
-    Applies the main font settings to the QApplication and all children of the given root widget.
+    Persist and apply the main UI font across the application.
+
+    This function:
+    - Persists the font configuration via ``ConfigManager.save_font``.
+    - Updates the global QApplication font.
+    - Recursively applies the font to all children of ``root_widget``.
 
     Args:
         font_family (str): Font family name.
-        font_size (int): Font size.
-        font_weight (QFont.Weight): Font weight enum.
-        root_widget (QWidget): Root widget to apply font recursively.
+        font_size (int): Font point size.
+        font_weight (QFont.Weight | int): Font weight. Expected to be compatible
+            with ``QFont.setWeight()``.
+        root_widget (QWidget): Root widget whose descendants should receive the font.
+
+    Returns:
+        None
     """
     ConfigManager.save_font(font_family, font_size, font_weight)
     font = QApplication.font()
@@ -93,11 +122,22 @@ def apply_main_font_to_app(font_family, font_size, font_weight, root_widget):
 
 def apply_overlay_font(widget_overlay, settings):
     """
-    Applies font settings to the overlay widget and re-applies overlay styles.
+    Apply overlay font settings to an existing overlay widget.
+
+    Note:
+        ``WidgetOverlay.apply_settings()`` already reads from configuration and
+        applies font + colors + sizing logic. This helper sets a base font first
+        and then delegates the full refresh to ``apply_settings()``.
 
     Args:
-        widget_overlay (WidgetOverlay): The overlay instance.
-        settings (dict): Dictionary with keys: display_font_family, display_font_size, display_font_weight
+        widget_overlay (WidgetOverlay | None): Overlay instance to update.
+        settings (dict): Settings dictionary expected to contain:
+            - ``display_font_family`` (str)
+            - ``display_font_size`` (int)
+            - ``display_font_weight`` (int or QFont.Weight)
+
+    Returns:
+        None
     """
     if not widget_overlay:
         return

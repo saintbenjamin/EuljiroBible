@@ -8,8 +8,21 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Handles loading, saving, and updating user settings for EuljiroBible GUI.
-Includes utility for font selection and safe default fallback for corrupted or missing settings.
+Configuration manager for the EuljiroBible GUI.
+
+This module provides a single entry point for loading, saving, and updating user
+settings (JSON) used by the GUI. It also includes platform-aware defaults and
+utilities related to font selection.
+
+Key responsibilities:
+
+- Read and write the settings JSON file (with UTF-8 encoding).
+- Recover safely from missing, corrupted, or invalid settings files by
+    falling back to ``DEFAULT_SETTINGS``.
+- Provide OS-specific reasonable default font selection.
+
+Note:
+    - This module may show GUI error dialogs when a QApplication instance exists. If not, it falls back to console output.
 """
 
 import os
@@ -51,6 +64,18 @@ DEFAULT_SETTINGS = {
 class ConfigManager:
     """
     Manages loading, saving, and modifying user settings for the application.
+
+    This class centralizes access to the GUI settings JSON file and provides helpers
+    for applying safe defaults when the settings file is missing or invalid. All
+    methods are static to keep the API simple and to avoid accidental state drift.
+
+    Attributes:
+        BASE_DIR (str):
+            Absolute path to the application/project base directory.
+
+        DEFAULT_OUTPUT_PATH (str):
+            Default verse output path used when ``output_path`` is missing from the
+            settings file. Typically ``<BASE_DIR>/verse_output.txt``.
     """
 
     BASE_DIR = paths.BASE_DIR
@@ -59,30 +84,46 @@ class ConfigManager:
     @staticmethod
     def get_icon_dir():
         """
-        Returns the path to the application's icon directory.
+        Return the absolute path to the application's icon directory.
 
         Returns:
-            str: Absolute path to the icon directory.
+            str:
+                Absolute path to the icon directory (e.g., ``paths.ICON_DIR``).
         """
         return paths.ICON_DIR
 
     @staticmethod
     def get_bible_data_dir():
         """
-        Returns the directory path where Bible JSON files are stored.
+        Return the directory path where Bible text JSON files are stored.
 
         Returns:
-            str: Path to Bible text data directory.
+            str:
+                Absolute path to the Bible text data directory (e.g., ``paths.BIBLE_DATA_DIR``).
         """
         return paths.BIBLE_DATA_DIR
 
     @staticmethod
     def load():
         """
-        Loads the user settings from disk. If missing or invalid, falls back to default.
+        Load user settings from disk with safe fallback behavior.
+
+        This method reads the JSON settings file defined by ``paths.SETTINGS_FILE``.
+        If the file does not exist, it is created using ``DEFAULT_SETTINGS``.
+        If the file exists but is corrupted or not a JSON object, a GUI error dialog
+        may be shown (when a QApplication instance exists) and the method falls back to
+        ``DEFAULT_SETTINGS``.
+
+        Backward compatibility:
+            - Ensures ``output_path`` exists in the loaded settings; if missing, it is populated with ``DEFAULT_OUTPUT_PATH``.
 
         Returns:
-            dict: Loaded settings or default settings on failure.
+            dict:
+                A settings dictionary. If loading fails, returns ``DEFAULT_SETTINGS``.
+
+        Raises:
+            None:
+                This method is intentionally non-throwing and recovers internally.
         """
         log_debug("[ConfigManager] settings loaded")
 
@@ -133,10 +174,19 @@ class ConfigManager:
     @staticmethod
     def save(data):
         """
-        Saves the given settings dictionary to the `settings.json` file.
+        Save the given settings dictionary to the settings JSON file.
+
+        The settings are written to ``paths.SETTINGS_FILE`` using UTF-8 encoding and
+        pretty-printed JSON for readability.
 
         Args:
-            data (dict): The settings to save.
+            data (dict):
+                The full settings dictionary to write.
+
+        Raises:
+            Exception:
+                Re-raises any I/O or serialization error after logging via
+                ``log_error_with_dialog``.
         """
         log_debug("[ConfigManager] settings saved")
         try:
@@ -149,10 +199,18 @@ class ConfigManager:
     @staticmethod
     def update_partial(data):
         """
-        Updates part of the settings dictionary and saves the result.
+        Update part of the settings dictionary and persist it.
+
+        This method loads the current settings, applies the given partial update
+        (overwriting existing keys), and saves the result back to disk.
 
         Args:
-            data (dict): Partial key-value pairs to update.
+            data (dict):
+                Partial key-value pairs to merge into the current settings.
+
+        Raises:
+            Exception:
+                Propagates exceptions from ``load()`` or ``save()`` if saving fails.
         """
         log_debug(f"[ConfigManager] settings partially updated: {data}")
         settings = ConfigManager.load()
@@ -162,11 +220,15 @@ class ConfigManager:
     @staticmethod
     def get_default_font():
         """
-        Returns a default font based on the operating system.
-        Checks several commonly available fonts in system preference order.
+        Return the best available default font family for the current platform.
+
+        This method inspects available system fonts (via ``QFontDatabase``) and selects
+        a preferred font from a platform-specific candidate list. If none of the
+        candidates are available, it falls back to Qt's default font family.
 
         Returns:
-            str: Best available font family for the platform.
+            str:
+                Font family name that is expected to exist on the current system.
         """
         font_db = QFontDatabase()
         system = platform.system()
@@ -188,12 +250,21 @@ class ConfigManager:
     @staticmethod
     def save_font(family, size, weight):
         """
-        Updates and persists the UI font preferences.
+        Update and persist the application's main UI font preferences.
+
+        This method updates ``font_family``, ``font_size``, and ``font_weight`` in the
+        settings file and saves them immediately.
 
         Args:
-            family (str): Font family name.
-            size (int): Font size.
-            weight (int): Font weight value.
+            family (str):
+                Font family name.
+
+            size (int):
+                Font point size.
+
+            weight (int):
+                Font weight value. Typically a Qt weight integer (e.g., values aligned
+                with ``QFont.Weight``).
         """
         settings = ConfigManager.load()
         settings.update({

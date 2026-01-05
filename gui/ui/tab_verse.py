@@ -8,7 +8,7 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Implements the TabVerse class for verse lookup, navigation, display, and output.
+Implements the :class:`gui.ui.tab_verse.TabVerse` class for verse lookup, navigation, display, and output.
 """
 
 import traceback
@@ -23,23 +23,54 @@ from gui.ui.tab_verse_selection_manager import TabVerseSelectionManager
 from gui.ui.tab_verse_ui import TabVerseUI
 from gui.utils.verse_output_handler import VerseOutputHandler
 
-
 class TabVerse(QWidget, TabVerseUI):
     """
-    Main UI class for the Bible verse tab.
-    Provides display, navigation, and save functionality for selected verses.
+    GUI tab widget for Bible verse lookup, navigation, and export.
+
+    This tab allows users to select one or more Bible versions, choose a book and
+    chapter, enter verse ranges, preview formatted output, navigate between verses,
+    and export the currently displayed verse to the configured overlay output file.
+
+    The tab coordinates UI state, selection helpers, and backend logic components
+    (TabVerseLogic, VerseVersionHelper, TabVerseSelectionManager, VerseOutputHandler).
+
+    Attributes:
+        tr (Callable[[str], str]): Translation function for UI labels and messages.
+        settings (dict): Application-level settings dictionary.
+        bible_data (BibleDataLoader): Bible data loader instance used for verse retrieval.
+        version_layout (QGridLayout): Layout holding version selection checkboxes.
+        version_helper (VerseVersionHelper): Helper for version selection and sorting.
+        selection_manager (TabVerseSelectionManager): Helper for populating and syncing
+            book/chapter/version UI elements.
+        output_handler (VerseOutputHandler): Handler that applies formatted verse text
+            to the main display widget and manages output formatting behavior.
+        logic (TabVerseLogic): Backend verse display/export logic.
+        version_list (list[str]): Available Bible versions used to populate UI controls.
+        current_language (str): Current UI language code (e.g., "ko", "en").
+        formatted_verse_text (str): Most recently formatted verse output (used for Enter key flow).
+        enter_state (int): Enter-key state machine (0 = ready to display, 1 = ready to export).
+        use_alias (bool): Whether to display version aliases instead of full version names.
+        get_polling_status (Callable[[], bool]): Callback returning current polling toggle state.
+        get_always_show_setting (Callable[[], bool]): Callback returning current
+            "always show buttons" toggle state.
     """
 
     def __init__(self, version_list, settings, tr, get_polling_status=None, get_always_show_setting=None):
         """
-        Initialize the TabVerse.
+        Initialize the TabVerse UI and connect backend helpers.
 
-        :param version_list: Available Bible versions
-        :type version_list: list[str]
-        :param settings: Loaded application settings
-        :type settings: dict
-        :param tr: Translation function
-        :type tr: Callable[[str], str]
+        This creates Bible data access, builds the version selection UI, initializes
+        selection helpers and logic handlers, and installs UI signal connections for
+        resetting Enter-state behavior when inputs change.
+
+        Args:
+            version_list (list[str]): Available Bible version identifiers.
+            settings (dict): Loaded application settings.
+            tr (Callable[[str], str]): Translation function for UI labels.
+            get_polling_status (Callable[[], bool] | None): Optional callback that returns
+                whether polling is active.
+            get_always_show_setting (Callable[[], bool] | None): Optional callback that returns
+                whether export/clear buttons should always be shown.
         """
         super().__init__()
         self.tr = tr
@@ -73,10 +104,13 @@ class TabVerse(QWidget, TabVerseUI):
 
     def change_language(self, lang_code):
         """
-        Dynamically updates UI labels when the language changes.
+        Update UI labels and state to reflect a new language setting.
 
-        :param lang_code: Language code ('ko' or 'en')
-        :type lang_code: str
+        This updates visible text, version summary rendering, book dropdown population,
+        and button labels.
+
+        Args:
+            lang_code (str): Language code (e.g., "ko", "en").
         """
         self.current_language = lang_code
         self.messages = load_messages(lang_code)
@@ -114,17 +148,20 @@ class TabVerse(QWidget, TabVerseUI):
 
     def resizeEvent(self, event):
         """
-        Responds to window resize events and updates the version layout.
+        Handle resize events and recompute the version checkbox grid layout.
 
-        :param event: Resize event object
-        :type event: QResizeEvent
+        Args:
+            event (QResizeEvent): Resize event object.
         """
         super().resizeEvent(event)
         self.selection_manager.update_grid_layout(self)
 
     def update_button_layout(self):
         """
-        Updates the layout of the action buttons depending on polling mode.
+        Update the action button layout depending on effective polling state.
+
+        Effective polling is defined as:
+        polling enabled OR the "always show buttons" setting enabled.
         """
         poll_enabled = self.get_polling_status()
         always_show = self.get_always_show_setting()
@@ -148,27 +185,32 @@ class TabVerse(QWidget, TabVerseUI):
 
     def get_polling_status(self):
         """
-        Returns the current polling toggle state.
-        This method should be overridden or injected externally.
+        Return the current polling toggle state.
 
-        :return: True if polling is enabled, False otherwise.
-        :rtype: bool
+        This method is designed to be overridden or replaced by an injected callback.
+
+        Returns:
+            bool: True if polling is enabled; otherwise False.
         """
         return False  # Default fallback, should be replaced by actual callback
 
     def get_always_show_setting(self):
         """
-        Returns the current 'always show buttons' setting.
-        This method should be overridden or injected externally.
+        Return the current "always show buttons" setting.
 
-        :return: True if always show is enabled, False otherwise.
-        :rtype: bool
+        This method is designed to be overridden or replaced by an injected callback.
+
+        Returns:
+            bool: True if export/clear buttons should always be visible; otherwise False.
         """
         return False  # Default fallback, should be replaced by actual callback
 
     def toggle_alias_mode(self):
         """
-        Toggles between alias name and full name for Bible versions.
+        Toggle between alias names and full names for Bible version display.
+
+        This updates the alias mode flag, refreshes the toggle label, and updates the
+        version summary accordingly.
         """
         self.use_alias = self.alias_toggle_btn.isChecked()
         self.alias_toggle_btn.setText(
@@ -178,7 +220,11 @@ class TabVerse(QWidget, TabVerseUI):
 
     def handle_enter(self):
         """
-        Handles Enter key logic for alternating between search and save.
+        Handle Enter-key behavior as a two-step flow: display then export.
+
+        If no formatted verse is currently staged, this displays the verse and caches
+        the formatted output. If a formatted verse is already staged, this exports it
+        to the output destination and resets the state machine.
         """
         if not self.formatted_verse_text:
             output = self.logic.display_verse(self.get_reference, self.verse_input, self.apply_output_text)
@@ -199,10 +245,11 @@ class TabVerse(QWidget, TabVerseUI):
 
     def get_reference(self):
         """
-        Returns parsed reference from the input fields.
+        Build and return the resolved verse reference tuple from current UI inputs.
 
-        :return: (versions, book, chapter, (start_verse, end_verse))
-        :rtype: tuple
+        Returns:
+            tuple: (versions, book, chapter, (start_verse, end_verse)) as produced by
+                the shared reference resolver.
         """
         from core.logic.verse_logic import resolve_reference
 
@@ -214,10 +261,10 @@ class TabVerse(QWidget, TabVerseUI):
 
     def apply_output_text(self, text: str):
         """
-        Displays formatted verse text in the main display box.
+        Apply formatted verse output text to the main display.
 
-        :param text: Formatted text to show
-        :type text: str
+        Args:
+            text (str): Formatted text to display.
         """
         if text:
             self.formatted_verse_text = text
@@ -225,10 +272,10 @@ class TabVerse(QWidget, TabVerseUI):
 
     def shift_verse(self, delta):
         """
-        Changes the current verse number up/down and displays the result.
+        Shift the current verse number by a delta and refresh the displayed output.
 
-        :param delta: +1 for next, -1 for previous
-        :type delta: int
+        Args:
+            delta (int): +1 for next verse, -1 for previous verse.
         """
         try:
             self.logic.delta = delta
@@ -246,14 +293,20 @@ class TabVerse(QWidget, TabVerseUI):
 
     def reset_enter_state(self):
         """
-        Resets enter state to default: ready to display verse.
+        Reset Enter-key state to the default "ready to display" mode.
+
+        This clears any staged formatted verse output so the next Enter press performs
+        a display operation.
         """
         self.enter_state = 0
         self.formatted_verse_text = ""
 
     def clear_outputs(self):
         """
-        Clears the displayed verse and the output file.
+        Clear the verse display and clear the output destination.
+
+        This clears the UI display widget and writes an empty string to the configured
+        output file(s) to stop any active overlay display.
         """
         self.display_box.clear()
         save_to_files("", self.settings)

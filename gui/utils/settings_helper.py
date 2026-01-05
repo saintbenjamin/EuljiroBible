@@ -14,27 +14,38 @@ based on user interface widget states, especially overlay-related UI components.
 
 def update_overlay_settings(settings, widget_overlays):
     """
-    Update the given settings dictionary with current values from overlay-related UI widgets.
+    Collect overlay display settings from UI widgets and update the settings dictionary.
+
+    This function reads the current state of overlay-related UI controls
+    (font, size, weight, colors, transparency, and display mode) and writes
+    their values into the provided settings dictionary using standardized keys.
+
+    It is designed to be called whenever overlay UI controls change, ensuring
+    that runtime behavior and persisted configuration remain consistent.
 
     Args:
-        settings (dict):
-            Settings dictionary to be updated.
+        settings (dict): Application settings dictionary to update in-place.
 
-        widget_overlays (dict):
-            Dictionary of UI widgets used for overlay settings.
+        widget_overlays (dict): Mapping of overlay-related UI widgets.
+            Expected keys and widget types:
 
-            Expected keys include:
-            font_combo (QComboBox or QFontComboBox),
-            size_combo (QComboBox),
-            weight_combo (QComboBox),
-            alpha_slider (QSlider),
-            text_color_btn (QPushButton),
-            bg_color_btn (QPushButton),
-            mode_combo (QComboBox; values: "fullscreen" or "resizable").
+                - "font_family_combo" (QComboBox | QFontComboBox):
+                    Font family selector.
+                - "font_size_combo" (QComboBox):
+                    Font size selector (text convertible to int).
+                - "font_weight_combo" (QComboBox):
+                    Font weight selector (Qt weight stored as item data).
+                - "alpha_slider" (QSlider):
+                    Background transparency slider (0–100).
+                - "text_color_btn" (QPushButton):
+                    Button whose palette color represents text color.
+                - "bg_color_btn" (QPushButton):
+                    Button whose palette color represents background color.
+                - "mode_combo" (QComboBox):
+                    Overlay mode selector (index 0 = fullscreen, 1 = resizable).
 
     Returns:
-        dict:
-            Updated settings dictionary containing overlay display configuration.
+        dict: The updated settings dictionary containing overlay display configuration.
     """
     font_family = widget_overlays["font_family_combo"].currentText()
     font_size = int(widget_overlays["font_size_combo"].currentText())

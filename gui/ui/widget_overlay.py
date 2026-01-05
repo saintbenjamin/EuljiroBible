@@ -21,23 +21,44 @@ from gui.utils.logger import log_error_with_dialog
 
 class WidgetOverlay(QWidget):
     """
-    Widget that displays Bible verses as an overlay widget, with file watching and polling support.
+    Overlay widget that displays verse output text in a dedicated window.
+
+    This widget watches (and optionally polls) the configured verse output file
+    (e.g., ``verse_output.txt``) and renders its contents as an on-screen overlay.
+    It supports two display modes:
+
+    - "fullscreen": frameless, translucent background window intended for projection/overlay use
+    - non-fullscreen/windowed: standard resizable window for testing or local preview
+
+    The widget applies user-configured font/color/background settings and includes
+    a simple auto-shrinking mechanism to fit long text within the available area.
+
+    Attributes:
+        mode (str): Display mode ("fullscreen" or windowed variant used by caller).
+        base_font_size (int): Base font size used as the starting point for auto-fit.
+        last_text (str): Last rendered text content used to detect changes.
+        poll_timer (QTimer | None): Polling timer used when polling is enabled.
+        verse_path (str): Path to the verse output file being watched/polled.
+        watcher (QFileSystemWatcher): File watcher for verse_path change notifications.
+        label (QLabel): Central label used to display the verse text.
+        bg_style (str): CSS fragment for background color (rgba) used in the label stylesheet.
+        text_color (str): Current text color in hex (e.g., "#000000").
     """
 
     def __init__(self, font_family, font_size, text_color, bg_color, alpha, mode, geometry, parent=None):
         """
-        Initializes the overlay widget.
+        Initialize the overlay widget and start file watching/polling.
 
         Args:
-            font_family (str): Font family for text.
-            font_size (int): Base font size.
-            text_color (str): Text color in hex.
-            bg_color (str): Background color in hex.
-            alpha (float): Background transparency.
-            mode (str): 'fullscreen' or 'windowed'.
+            font_family (str): Font family used for displayed text.
+            font_size (int): Base font size used as the starting point for auto-fit.
+            text_color (str): Text color in hex (e.g., "#000000").
+            bg_color (str): Background color in hex (e.g., "#FFFFFF").
+            alpha (float): Background alpha value used for rgba composition.
+            mode (str): Display mode ("fullscreen" or windowed variant used by caller).
             geometry (QRect): Initial window geometry.
-            parent (QWidget, optional): Parent widget.
-        """        
+            parent (QWidget | None): Optional parent widget.
+        """      
         super().__init__()
         self.mode = mode
         self.base_font_size = font_size
@@ -88,7 +109,11 @@ class WidgetOverlay(QWidget):
 
     def apply_settings(self):
         """
-        Applies updated display settings from configuration.
+        Apply updated display settings from persisted configuration.
+
+        This reloads font family/size/weight and overlay color/background settings from
+        ConfigManager, applies them to the label, updates the stylesheet, and re-runs
+        auto-fit against the currently displayed text.
         """
         settings = ConfigManager.load()
         font_family = settings.get("display_font_family", "Arial")
@@ -117,7 +142,13 @@ class WidgetOverlay(QWidget):
 
     def apply_stylesheet(self):
         """
-        Applies the current text color and background style.
+        Apply the current text and background style to the label.
+
+        This composes the label stylesheet from:
+
+        - text color
+        - background rgba style
+        - padding / border rules depending on fullscreen vs windowed mode
         """
         if self.mode == "fullscreen":
             border_radius = "border-radius: 30px; padding: 40px;"
@@ -132,10 +163,13 @@ class WidgetOverlay(QWidget):
 
     def adjust_font_size(self, text):
         """
-        Adjusts font size dynamically to fit text within the widget.
+        Auto-adjust the label font size to fit the given text within the widget.
+
+        This reduces the font size in steps until the rendered bounding rectangle fits
+        within a fraction of the available widget width/height.
 
         Args:
-            text (str): Text to fit.
+            text (str): Text content to fit.
         """
         available_width = int(self.width() * 0.8)
         available_height = int(self.height() * 0.8)
@@ -158,7 +192,7 @@ class WidgetOverlay(QWidget):
 
     def display_text(self, text):
         """
-        Displays the given text with adjusted font size.
+        Display text in the overlay and apply auto-fit sizing.
 
         Args:
             text (str): Text to display.
@@ -168,10 +202,10 @@ class WidgetOverlay(QWidget):
 
     def read_verse_file(self):
         """
-        Reads the verse output file.
+        Read and return the current verse output file contents.
 
         Returns:
-            str or None: File content if successful, else None.
+            str | None: Stripped file content if read succeeds; otherwise None.
         """
         try:
             with open(self.verse_path, "r", encoding="utf-8") as f:
@@ -183,7 +217,10 @@ class WidgetOverlay(QWidget):
 
     def reload_text(self):
         """
-        Reloads and updates the displayed text from the verse file.
+        Reload the verse file content and update the overlay display.
+
+        If the verse file is empty, the overlay closes itself (treated as an intentional
+        "clear overlay" signal). Otherwise, the new text is rendered and cached.
         """
         if os.path.exists(self.verse_path):
             verse_text = self.read_verse_file()
@@ -200,8 +237,10 @@ class WidgetOverlay(QWidget):
 
     def poll_file(self):
         """
-        Periodically checks the verse file for changes and updates display.
-        Used when polling is enabled.
+        Polling loop callback to detect file changes.
+
+        When polling is enabled, this periodically reads the verse file and triggers a
+        reload if the contents differ from the last rendered text.
         """
         if os.path.exists(self.verse_path):
             verse_text = self.read_verse_file()
@@ -212,11 +251,13 @@ class WidgetOverlay(QWidget):
 
     def on_file_changed(self, path):
         """
-        Handles file system notification of verse file changes.
-        Used when QFileSystemWatcher triggers a change event.
+        Handle file change notifications from QFileSystemWatcher.
+
+        This re-adds the path to the watcher (to handle certain platform behaviors where
+        the watch can be dropped on write/replace) and reloads the verse content.
 
         Args:
-            path (str): Path of the changed file.
+            path (str): Changed file path.
         """
         if os.path.exists(path):
             self.watcher.addPath(path)
@@ -224,10 +265,10 @@ class WidgetOverlay(QWidget):
 
     def resizeEvent(self, event):
         """
-        Handles widget resize events and adjusts font size.
+        Handle widget resize events and re-run auto-fit for the currently displayed text.
 
         Args:
-            event (QResizeEvent): The resize event.
+            event (QResizeEvent): Resize event.
         """
         super().resizeEvent(event)
         if hasattr(self, "label") and self.label.text():
@@ -235,7 +276,12 @@ class WidgetOverlay(QWidget):
 
     def keyPressEvent(self, event: QKeyEvent):
         """
-        Closes the overlay if ESC is pressed.
+        Handle key press events for overlay control.
+
+        Pressing ESC closes the overlay window. Other keys are passed to the base class.
+
+        Args:
+            event (QKeyEvent): Key event.
         """
         if event.key() == Qt.Key_Escape:
             self.close()
@@ -244,10 +290,10 @@ class WidgetOverlay(QWidget):
 
     def closeEvent(self, event):
         """
-        Handles widget close events and stops polling/watching.
+        Handle widget close events and stop active polling/watching resources.
 
         Args:
-            event (QCloseEvent): The close event.
+            event (QCloseEvent): Close event.
         """
         if hasattr(self, 'poll_timer'):
             self.poll_timer.stop()

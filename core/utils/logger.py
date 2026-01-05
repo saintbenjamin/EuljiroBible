@@ -8,9 +8,18 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Provides error and debug logging utilities for EuljiroBible.
+Provides error and debug logging utilities for EuljiroBible/EuljiroWorship.
 
-Logs are written to a central file, only when needed.
+This module defines a lightweight logging wrapper around Python's
+standard `logging <https://docs.python.org/3/library/logging.html>`_ module, with the following design goals:
+
+- Logs are written to disk only when actually needed
+- A single central log file is used across the application
+- Debug logging is enabled conditionally via the DEBUG environment variable
+- Duplicate handlers are avoided to support hot-reload scenarios
+
+The logger is primarily intended for internal error reporting and
+optional debug tracing, not for verbose application logging.
 """
 
 import logging
@@ -31,9 +40,17 @@ if not logger.hasHandlers():
 
     def _ensure_file_handler():
         """
-        Ensure that a file handler is attached to the logger.
+        Ensure that a file handler is attached to the global logger.
 
-        The file handler writes logs to the log file only when error or debug logging is required.
+        This function lazily initializes a `logging.FileHandler <https://docs.python.org/3/library/logging.handlers.html#logging.FileHandler>`_ and
+        attaches it to the module-level logger only once.
+
+        The log file is created only when an error or debug message
+        is actually emitted, avoiding unnecessary file I/O during
+        normal execution.
+
+        Returns:
+            None
         """
         global _file_handler
         if _file_handler is None:
@@ -47,13 +64,20 @@ else:
 
 def log_error(e):
     """
-    Logs an error with full traceback.
+    Log an exception as an error with full traceback information.
 
-    The log file is only created if logging is actually used. This function captures the exception
-    stack trace and logs it as an error message.
+    This function ensures that the file handler is initialized,
+    then records the exception message along with its traceback
+    using ERROR log level.
 
-    :param e: The exception to log
-    :type e: Exception
+    The log file is created only when this function is called.
+
+    Args:
+        e (Exception):
+            The exception instance to be logged.
+
+    Returns:
+        None
     """
     _ensure_file_handler()
     logger.error(str(e), exc_info=True)
@@ -61,10 +85,18 @@ def log_error(e):
 
 def log_debug(msg):
     """
-    Logs a debug message, only if DEBUG mode is enabled.
+    Log a debug message if DEBUG mode is enabled.
 
-    :param msg: The message to log as a debug message
-    :type msg: str
+    Debug mode is determined by the environment variable ``DEBUG=1``
+    at application startup. If DEBUG mode is disabled, this
+    function performs no action.
+
+    Args:
+        msg (str):
+            The debug message to record.
+
+    Returns:
+        None
     """
     if DEBUG_MODE:
         _ensure_file_handler()

@@ -15,14 +15,27 @@ from gui.config.config_manager import ConfigManager
 
 def save_settings_from_ui(app, tab_verse):
     """
-    Saves UI state settings into the settings.json file.
+    Persist relevant UI state into the application settings.
 
-    Captures font settings, last selected versions, last book/chapter/verse,
-    and dark mode status from the UI and persists them.
+    This function extracts user-facing state from the running UI and writes it
+    to the settings store via ConfigManager. It is typically called on application
+    shutdown to ensure that the next launch restores the most recent context.
+
+    The following information is captured:
+
+    - Application-wide font family, size, and weight
+    - Last selected Bible versions
+    - Last selected book, chapter, and verse
+    - Current dark mode state
 
     Args:
-        app (QApplication): The main application instance.
-        tab_verse (TabVerse): The verse tab widget containing the UI state.
+        app (QApplication): Active QApplication instance used to query global font
+            and theme (dark mode) state.
+        tab_verse (TabVerse): Verse tab instance providing access to the current
+            book/chapter/verse selection and version helper.
+
+    Returns:
+        None
     """
     selected_versions = tab_verse.version_helper.get_selected_versions()
     settings = {

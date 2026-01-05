@@ -9,6 +9,18 @@
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
 Handles lazy loading and caching of Bible text and metadata from JSON sources.
+
+This module provides a unified data access layer for Bible-related resources,
+including:
+
+- Bible version aliases
+- Book name aliases
+- Canonical book names
+- Custom sort order
+- Full Bible text data
+
+All Bible text JSON files are loaded lazily and cached in memory on first access
+to minimize startup cost and disk I/O.
 """
 
 import os
@@ -19,19 +31,72 @@ from core.utils.logger import log_error
 
 class BibleDataLoader:
     """
-    Loads and lazily caches Bible-related JSON data: version aliases, book aliases, canonical names,
-    and full Bible texts.
+    Lazy-loading data manager for Bible text and metadata.
 
-    Lazy-loading ensures performance is optimized by only loading data on-demand.
+    This loader provides on-demand (lazy) access to Bible JSON resources and caches
+    loaded content in memory to avoid repeated disk I/O.
+
+    It loads and exposes:
+
+    - Version alias metadata (e.g., full name → short label)
+    - Book alias / canonical naming metadata
+    - Canonical book name table (per language)
+    - Version sort order metadata
+    - Per-version Bible text JSON files (loaded only when first accessed)
+
+    The class is shared by both EuljiroBible and EuljiroWorship and therefore keeps
+    several compatibility helpers and legacy-style accessors.
+
+    Attributes:
+        json_dir (str):
+            Directory containing Bible metadata JSON files (aliases, canonical names,
+            and sort order).
+
+        text_dir (str):
+            Directory containing Bible text JSON files (per-version text).
+
+        aliases_version (dict):
+            Parsed content of ``aliases_version.json``. Typically maps a version key
+            to either a string alias or a nested dict containing localized aliases,
+            depending on your data schema.
+
+        aliases_book (dict):
+            Parsed content of ``aliases_book.json``. Used for book name aliasing and
+            compatibility mapping.
+
+        standard_book (dict):
+            Parsed content of ``standard_book.json``. Maps canonical book IDs to a
+            per-language display name dictionary (e.g., ``{"John": {"ko": "...", "en": "John"}}``).
+
+        sort_order (dict):
+            Parsed content of the configured sort-order JSON (e.g., prefix → rank).
+            Used by :meth:`get_sort_key` for stable version ordering in UI/CLI.
+
+        data (dict):
+            In-memory cache of loaded Bible text, keyed by version key.
+            Structure is typically ``data[version][book][chapter][verse] = text``.
+
+    Note:
+        - Version JSON is loaded lazily by :meth:`get_verses`. Use :meth:`load_version` or :meth:`load_versions` to preload explicitly.
+        - Some methods exist primarily for cross-project compatibility and are not necessarily used by every code path.
     """
 
     def __init__(self, json_dir=None, text_dir=None):
         """
-        Initializes the data loader with optional override paths.
+        Initialize the Bible data loader.
+
+        Optional directory overrides can be supplied for testing or
+        alternative data layouts.
 
         Args:
-            json_dir (str, optional): Path to JSON metadata files.
-            text_dir (str, optional): Path to Bible text JSON files.
+            json_dir (str, optional):
+                Directory containing Bible metadata JSON files
+                (aliases, canonical names, sort order).
+            text_dir (str, optional):
+                Directory containing Bible text JSON files.
+        
+        Returns:
+            None
         """
         self.json_dir = json_dir or paths.BIBLE_NAME_DIR
         self.text_dir = text_dir or paths.BIBLE_DATA_DIR
@@ -46,13 +111,19 @@ class BibleDataLoader:
 
     def get_verses(self, version):
         """
-        Retrieves all verses for a given Bible version, loading from disk if needed.
+        Retrieve all verses for a given Bible version.
+
+        The version data is loaded from disk only once and cached
+        internally for subsequent access.
 
         Args:
-            version (str): Version key (e.g. "KJV", "NKRV")
+            version (str):
+                Bible version key (e.g. "NKRV", "KJV").
 
         Returns:
-            dict: Full nested dict of verses for the version
+            dict:
+                Nested dictionary structure containing the full Bible
+                text for the specified version.
         """
         if version not in self.data:
             try:
@@ -65,26 +136,33 @@ class BibleDataLoader:
 
     def get_books_for_version(self, version):
         """
-        Returns the list of books available for the specified version.
+        Return the list of books available in a given Bible version.
 
         Args:
-            version (str): Bible version key
+            version (str):
+                Bible version key.
 
         Returns:
-            list: Book names in the version
+            list:
+                List of book identifiers present in the version.
         """
         verses = self.get_verses(version)
         return list(verses.keys()) if verses else []
 
     def _load_json(self, file_path):
         """
-        Internal utility to safely load a JSON file.
+        Safely load a JSON file and return its contents.
+
+        If loading fails, an empty dictionary is returned and a warning
+        is printed to the console.
 
         Args:
-            file_path (str): Path to the JSON file
+            file_path (str):
+                Absolute path to the JSON file.
 
         Returns:
-            dict: Parsed JSON content or empty dict on failure
+            dict:
+                Parsed JSON content, or an empty dict on failure.
         """
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -95,24 +173,36 @@ class BibleDataLoader:
 
     def get_standard_book(self, book_id: str, lang_code: str) -> str:
         """
-        Returns localized canonical book name from internal ID.
+        Return the localized canonical name of a Bible book.
 
         Args:
-            book_id (str): Canonical book ID
-            lang_code (str): Language code
+            book_id (str):
+                Canonical book identifier (e.g. "John").
+            lang_code (str):
+                Language code (e.g. "ko", "en").
 
         Returns:
-            str: Localized name
+            str:
+                Localized book name if available, otherwise the book ID.
         """
         return self.standard_book.get(book_id, {}).get(lang_code, book_id)
 
     def get_sort_key(self):
         """
-        Returns a key function for sorting version names by region prefix.
-        Required by GUI and CLI sorting logic. DO NOT DELETE.
+        Return a sorting key function for Bible version names.
+
+        The key function sorts versions using a predefined regional
+        prefix order followed by lexicographical ordering.
+
+        This method is required by both GUI and CLI code paths.
+        *DO NOT DELETE*.
+
+        Args:
+            None
 
         Returns:
-            function: Sort key callable for use with sorted()
+            function:
+                Callable suitable for use as the ``key`` argument in ``sorted()``.
         """
         def sort_key(version_name: str):
             prefix = version_name.split()[0]
@@ -121,10 +211,16 @@ class BibleDataLoader:
 
     def load_version(self, version_key):
         """
-        Manually loads a Bible version into memory.
+        Explicitly load a Bible version into memory.
+
+        This method forces loading even if lazy access has not yet occurred.
 
         Args:
-            version_key (str): Version file name without extension
+            version_key (str):
+                Bible version key (filename without extension).
+
+        Returns:
+            None
         """
         path = os.path.join(self.text_dir, f"{version_key}.json")
         try:
@@ -135,6 +231,19 @@ class BibleDataLoader:
             self.data[version_key] = {}
 
     def load_versions(self, target_versions=None):
+        """
+        Load multiple Bible versions into memory.
+
+        If no target list is provided, all available versions
+        in the text directory are loaded.
+
+        Args:
+            target_versions (list, optional):
+                List of version keys to load.
+
+        Returns:
+            None
+        """
         if target_versions is None:
             self.data.clear()
             target_versions = [
@@ -146,6 +255,21 @@ class BibleDataLoader:
             self.load_version(v)
 
     def get_max_verse(self, version, book, chapter):
+        """
+        Return the maximum verse number for a given chapter.
+
+        Args:
+            version (str):
+                Bible version key.
+            book (str):
+                Book identifier.
+            chapter (int):
+                Chapter number.
+
+        Returns:
+            int:
+                Maximum verse number, or 0 if unavailable.
+        """
         version_data = self.data.get(version)
         if not version_data:
             return 0
@@ -159,16 +283,21 @@ class BibleDataLoader:
 
     def extract_verses(self, versions, book, chapter, verse_range):
         """
-        Extracts specific verses across multiple versions for given book/chapter/range.
+        Extract a specific verse range across multiple Bible versions.
 
         Args:
-            versions (list): List of version keys
-            book (str): Book name
-            chapter (int): Chapter number
-            verse_range (tuple): (start, end) range, or (start, -1) for full chapter
+            versions (list):
+                List of Bible version keys.
+            book (str):
+                Book identifier.
+            chapter (int):
+                Chapter number.
+            verse_range (tuple):
+                (start, end) or (start, -1) for full chapter.
 
         Returns:
-            dict: Nested verse dictionary grouped by version
+            dict:
+                Nested dictionary of extracted verses grouped by version.
         """
         results = {}
         chapter_str = str(chapter)
@@ -200,16 +329,21 @@ class BibleDataLoader:
 
     def get_verses_for_display(self, versions=None, book=None, chapter=None, verse_range=None):
         """
-        Returns either extracted subset or full data depending on arguments.
+        Return either a filtered verse subset or full Bible data.
 
         Args:
-            versions (list): List of version keys
-            book (str): Book name
-            chapter (int): Chapter number
-            verse_range (tuple): (start, end) range
+            versions (list, optional):
+                Bible version keys.
+            book (str, optional):
+                Book identifier.
+            chapter (int, optional):
+                Chapter number.
+            verse_range (tuple, optional):
+                Verse range.
 
         Returns:
-            dict: Bible text in structured format
+            dict:
+                Structured Bible text data.
         """
         if versions and book and chapter and verse_range:
             return self.extract_verses(versions, book, chapter, verse_range)
@@ -218,13 +352,15 @@ class BibleDataLoader:
 
     def get_book_alias(self, lang_code="ko") -> dict:
         """
-        Returns book ID to alias mapping for display in selected language.
+        Return mapping of book IDs to localized aliases.
 
         Args:
-            lang_code (str): Language code
+            lang_code (str):
+                Language code.
 
         Returns:
-            dict: book_id -> localized alias
+            dict:
+                Mapping of ``book_id`` -> localized name.
         """
         return {
             book_id: data.get(lang_code, book_id)
@@ -233,13 +369,15 @@ class BibleDataLoader:
 
     def get_version_alias(self, lang_code="ko") -> dict:
         """
-        Returns mapping of version keys to localized version aliases.
+        Return mapping of Bible version keys to localized aliases.
 
         Args:
-            lang_code (str): Language code
+            lang_code (str):
+                Language code.
 
         Returns:
-            dict: version_key -> alias string
+            dict:
+                Mapping of ``version_key`` -> alias string.
         """
         alias_map = {}
         for k, v in self.aliases_version.items():
@@ -252,16 +390,23 @@ class BibleDataLoader:
     # For compatibility with EuljiroWorship system    
     def get_verse(self, version: str, book: str, chapter: int, verse: int) -> str | None:
         """
-        Retrieves a single verse from a specified version/book/chapter/verse.
+        Retrieve a single verse from the loaded Bible data.
+
+        This method exists for compatibility with the EuljiroWorship system.
 
         Args:
-            version (str): Bible version key (e.g., 'NKRV')
-            book (str): Book ID (e.g., 'John')
-            chapter (int): Chapter number
-            verse (int): Verse number
+            version (str):
+                Bible version key.
+            book (str):
+                Book identifier.
+            chapter (int):
+                Chapter number.
+            verse (int):
+                Verse number.
 
         Returns:
-            str | None: Verse text, or None if not found
+            str | None:
+                Verse text if found, otherwise None.
         """
         verses = self.get_verses(version)
         return (

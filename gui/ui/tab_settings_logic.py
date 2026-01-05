@@ -25,25 +25,30 @@ from gui.utils.utils_dialog import get_save_path, set_color_from_dialog
 
 class TabSettingsLogic:
     """
-    Provides logic operations for the settings tab UI.
+    Backend logic handler for the settings tab.
 
-    Handles font application, theme updates, polling intervals, path selections, and color pickers.
+    This class encapsulates non-UI operations used by TabSettings, including:
+    font application, overlay configuration persistence, polling interval validation,
+    output path selection, and color picker actions.
 
-    :param settings: Shared application settings dictionary
-    :type settings: dict
-    :param app: QApplication instance
-    :type app: QApplication
-    :param tr_func: Translation function for localized messages
-    :type tr_func: Callable[[str], str]
+    Attributes:
+        settings (dict): Shared application settings dictionary.
+        app (QApplication): Qt application instance used for theme/style updates.
+        tr (Callable[[str], str]): Translation function for localized UI strings.
+        refresh_settings_callback (Callable[[], None] | None): Optional callback to refresh
+            other UI tabs/components after settings changes.
     """
 
     def __init__(self, settings, app, tr_func, refresh_settings_callback):
         """
-        Initialize settings logic handler.
+        Initialize the settings logic handler.
 
-        :param settings: Settings dictionary
-        :param app: QApplication instance
-        :param tr_func: Translation function
+        Args:
+            settings (dict): Shared application settings dictionary.
+            app (QApplication): QApplication instance.
+            tr_func (Callable[[str], str]): Translation function for localized messages.
+            refresh_settings_callback (Callable[[], None] | None): Optional callback invoked
+                after applying settings to refresh other UI components.
         """
         self.settings = settings
         self.app = app
@@ -52,10 +57,15 @@ class TabSettingsLogic:
 
     def apply_dynamic_settings(self, parent):
         """
-        Apply font, overlay, and display settings to the application.
+        Apply dynamic font and overlay display settings.
 
-        :param parent: Reference to the TabSettings instance (contains UI state)
-        :type parent: QWidget
+        This applies the main application font, collects overlay display settings from
+        the UI widgets, persists them via ConfigManager, and updates the active overlay
+        window if it is currently shown. If a refresh callback is provided, it is called
+        to propagate the updated settings to other tabs.
+
+        Args:
+            parent (QWidget): TabSettings instance providing current UI widget state.
         """
         if not hasattr(parent, "display_font_size_combo"):
             return
@@ -95,14 +105,12 @@ class TabSettingsLogic:
 
     def apply_font_to_children(self, parent, widget, font):
         """
-        Recursively apply a font to a widget and its children.
+        Apply a font to a widget and all of its child widgets.
 
-        :param parent: Root window
-        :type parent: QWidget
-        :param widget: Target widget to apply font to
-        :type widget: QWidget
-        :param font: QFont instance
-        :type font: QFont
+        Args:
+            parent (QWidget): Root window or settings tab context (kept for signature consistency).
+            widget (QWidget): Target widget to apply the font to.
+            font (QFont): Font to apply.
         """
         widget.setFont(font)
         for child in widget.findChildren(QWidget):
@@ -110,10 +118,13 @@ class TabSettingsLogic:
 
     def select_output_path(self, parent):
         """
-        Open a file dialog to set the verse output file path.
+        Open a file dialog to select the verse output file path.
 
-        :param parent: TabSettings instance with path input field
-        :type parent: QWidget
+        If the user selects a path, this updates the UI field and persists the value
+        to settings via ConfigManager.
+
+        Args:
+            parent (QWidget): TabSettings instance containing the path UI field and settings.
         """
         current_path = parent.output_edit.text()
         path = get_save_path(parent, current_path, parent.tr("dialog_path"))
@@ -124,34 +135,37 @@ class TabSettingsLogic:
 
     def select_text_color(self, parent):
         """
-        Open a color picker dialog to select the overlay text color.
+        Open a color picker dialog to set the overlay text color.
 
-        Updates button color, saves to settings, and reapplies dynamic settings.
+        This updates the color preview, persists the setting, and triggers reapplication
+        of dynamic settings.
 
-        :param parent: TabSettings instance
-        :type parent: QWidget
+        Args:
+            parent (QWidget): TabSettings instance containing the text color UI button.
         """
         set_color_from_dialog(parent.text_color_btn, "display_text_color", parent.apply_dynamic_settings)
 
     def select_bg_color(self, parent):
         """
-        Open a color picker dialog to select the overlay background color.
+        Open a color picker dialog to set the overlay background color.
 
-        Updates button color, saves to settings, and reapplies dynamic settings.
+        This updates the color preview, persists the setting, and triggers reapplication
+        of dynamic settings.
 
-        :param parent: TabSettings instance
-        :type parent: QWidget
+        Args:
+            parent (QWidget): TabSettings instance containing the background color UI button.
         """
         set_color_from_dialog(parent.bg_color_btn, "display_bg_color", parent.apply_dynamic_settings)
 
     def save_poll_interval(self, parent):
         """
-        Save the polling interval from the input box.
+        Validate and save the polling interval from the UI.
 
-        If the value is not a valid integer, show a warning dialog.
+        If the interval is not a valid integer, this shows a warning dialog and does not
+        persist any changes. On success, the interval is saved to settings via ConfigManager.
 
-        :param parent: TabSettings instance
-        :type parent: QWidget
+        Args:
+            parent (QWidget): TabSettings instance containing the polling interval input widget.
         """
         text = parent.poll_input.text()
 
@@ -172,10 +186,14 @@ class TabSettingsLogic:
 
     def apply_polling_settings(self, parent):
         """
-        Apply polling logic: start or stop polling based on toggle.
+        Apply polling timer behavior based on the current settings.
 
-        :param parent: TabSettings instance
-        :type parent: QWidget
+        If polling is enabled, this restarts the polling timer using the configured
+        interval and performs an immediate poll. If polling is disabled, this stops
+        the timer and closes any active overlay window.
+
+        Args:
+            parent (QWidget): TabSettings instance owning the polling timer and overlay window.
         """
         poll_enabled = parent.settings.get("poll_enabled", False)
         poll_interval = parent.settings.get("poll_interval", 1000)

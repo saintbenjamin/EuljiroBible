@@ -131,7 +131,7 @@ _available_languages = None # Cache to avoid re-reading directory repeatedly
 
 def get_available_languages():
     """
-    Returns a dict like { "ko": "한국어", "en": "English" } for all JSON files in translation folder.
+    Returns a dict like ``{ "ko": "한국어", "en": "English" }`` for all JSON files in translation folder.
     """
     global _available_languages
     if _available_languages is not None:

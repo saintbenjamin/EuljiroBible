@@ -8,7 +8,7 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Implements the TabKeyword class for EuljiroBible, enabling Bible keyword search,
+Implements the :class:`gui.ui.tab_keyword.TabKeyword` class for EuljiroBible, enabling Bible keyword search,
 search result rendering, multilingual updates, and verse output handling.
 """
 
@@ -19,30 +19,38 @@ from gui.ui.locale.message_loader import load_messages
 from gui.ui.tab_keyword_logic import TabKeywordLogic
 from gui.ui.tab_keyword_ui import TabKeywordUI
 
-
 class TabKeyword(QWidget, TabKeywordUI):
     """
-    GUI tab class for Bible keyword searching.
+    GUI tab widget for Bible keyword searching.
 
-    Provides multilingual keyword search, result table display,
-    summary box update, and verse export functionality.
+    This tab provides a multilingual keyword search workflow backed by
+    TabKeywordLogic, including result table rendering, summary updates,
+    and exporting the selected verse for overlay usage.
+
+    Attributes:
+        tr (Callable[[str], str]): Translation function for UI labels and messages.
+        settings (dict): Application-level settings dictionary.
+        current_language (str): Current UI language code (e.g., "ko", "en").
+        bible_data (BibleDataLoader): Bible data loader instance used by this tab.
+        logic (TabKeywordLogic): Backend logic handler for search and export actions.
+        get_polling_status (Callable[[], bool]): Callback returning current polling state.
+        get_always_show_setting (Callable[[], bool]): Callback returning current
+            "always show buttons" toggle state.
     """
 
     def __init__(self, version_list, settings, tr,
                  get_polling_status=None, get_always_show_setting=None):
         """
-        Initialize the TabKeyword UI, logic, and Bible data.
+        Initialize the TabKeyword UI, logic backend, and Bible data.
 
-        :param version_list: Available Bible version list
-        :type version_list: list[str]
-        :param settings: Application-level settings
-        :type settings: dict
-        :param tr: Translation function for UI labels
-        :type tr: Callable[[str], str]
-        :param get_polling_status: Optional callback to get polling state
-        :type get_polling_status: Callable[[], bool] or None
-        :param get_always_show_setting: Optional callback for always-show-button toggle
-        :type get_always_show_setting: Callable[[], bool] or None
+        Args:
+            version_list (list[str]): Available Bible version list shown in the UI.
+            settings (dict): Application-level settings.
+            tr (Callable[[str], str]): Translation function for UI labels.
+            get_polling_status (Callable[[], bool] | None): Optional callback to retrieve
+                polling state. If not provided, a default stub method is used.
+            get_always_show_setting (Callable[[], bool] | None): Optional callback to retrieve
+                the "always show buttons" state. If not provided, a default stub method is used.
         """
         super().__init__()
         self.tr = tr
@@ -64,10 +72,10 @@ class TabKeyword(QWidget, TabKeywordUI):
 
     def change_language(self, lang_code):
         """
-        Update UI text and placeholder strings according to selected language.
+        Update UI text and placeholder strings according to the selected language.
 
-        :param lang_code: Language code ('ko', 'en', etc.)
-        :type lang_code: str
+        Args:
+            lang_code (str): Language code (e.g., "ko", "en").
         """
         self.current_language = lang_code
         self.messages = load_messages(lang_code)
@@ -90,14 +98,20 @@ class TabKeyword(QWidget, TabKeywordUI):
 
     def save_selected_verse(self):
         """
-        Save the currently selected verse to verse_output.txt
-        for overlay usage or exporting.
+        Save the currently selected verse to the overlay output file.
+
+        This delegates to the logic backend, which writes the selected verse to
+        the configured verse output destination (e.g., verse_output.txt) for overlay
+        usage or exporting.
         """
         self.logic.save_selected_verse(self)
 
     def clear_outputs(self):
         """
-        Clear the verse output file and reset summary/preview fields.
+        Clear the verse output destination and reset summary/preview fields.
+
+        This delegates to the logic backend to clear the output file and reset
+        UI state as needed.
         """
         self.logic.clear_outputs(self)
 
@@ -105,8 +119,8 @@ class TabKeyword(QWidget, TabKeywordUI):
         """
         Update the keyword result table with new entries.
 
-        :param results: List of result dictionaries
-        :type results: list[dict]
+        Args:
+            results (list[dict]): List of result dictionaries produced by the search backend.
         """
         self.logic.update_table(self, results)
 
@@ -114,27 +128,29 @@ class TabKeyword(QWidget, TabKeywordUI):
         """
         Update the summary box with keyword occurrence counts.
 
-        :param counts: Keyword → count dictionary
-        :type counts: dict[str, int]
+        Args:
+            counts (dict[str, int]): Mapping from keyword to occurrence count.
         """
         self.logic.update_summary(self, counts)
 
     def get_polling_status(self):
         """
         Return the current polling toggle state.
-        Overridable callback for external control.
 
-        :return: True if polling is active
-        :rtype: bool
+        This method is designed to be overridden or replaced by an injected callback.
+
+        Returns:
+            bool: True if polling is active; otherwise False.
         """
         return False
 
     def get_always_show_setting(self):
         """
-        Return the current 'always show buttons' setting.
-        Overridable callback for external control.
+        Return the current "always show buttons" setting.
 
-        :return: True if buttons are always shown
-        :rtype: bool
+        This method is designed to be overridden or replaced by an injected callback.
+
+        Returns:
+            bool: True if buttons are always shown; otherwise False.
         """
         return False

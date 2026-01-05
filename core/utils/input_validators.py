@@ -17,6 +17,13 @@ def validate_int(text, min_value=None, max_value=None):
     Validates whether the given input text is a valid integer,
     optionally enforcing minimum and/or maximum bounds.
 
+    Example:
+        >>> validate_int("42", min_value=10, max_value=100)
+        (True, 42)
+
+        >>> validate_int("abc")
+        (False, None)
+
     Args:
         text (str): Input string to validate.
         min_value (int, optional): Lower bound (inclusive). Defaults to None.
@@ -26,13 +33,6 @@ def validate_int(text, min_value=None, max_value=None):
         tuple:
             - is_valid (bool): True if the input is a valid integer and within bounds.
             - value (int or None): The parsed integer if valid; otherwise None.
-
-    Example:
-        >>> validate_int("42", min_value=10, max_value=100)
-        (True, 42)
-
-        >>> validate_int("abc")
-        (False, None)
     """
     try:
         # Attempt to convert text to integer

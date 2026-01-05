@@ -9,7 +9,7 @@
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
 Provides reusable UI widgets such as buttons, checkboxes, and loading indicator.
-Includes utility wrappers for QPushButton creation with SVG icons and dynamic sizing.
+Includes utility wrappers for `QPushButton` creation with SVG icons and dynamic sizing.
 """
 
 from PySide6.QtWidgets import QPushButton, QCheckBox, QWidget, QApplication, QSizePolicy
@@ -19,11 +19,11 @@ from PySide6.QtGui import QPainter, QPen, QIcon
 
 def create_button(text, callback=None):
     """
-    Creates a QPushButton with optional click callback.
+    Creates a `QPushButton` with optional click callback.
 
     Args:
         text (str): Text to display on the button.
-        callback (function, optional): Slot to connect to clicked() signal.
+        callback (function, optional): Slot to connect to ``clicked()`` signal.
 
     Returns:
         QPushButton: The configured button.
@@ -36,7 +36,7 @@ def create_button(text, callback=None):
 
 def create_checkbox(text, checked=False, callback=None):
     """
-    Creates a QCheckBox with optional initial state and signal connection.
+    Creates a `QCheckBox` with optional initial state and signal connection.
 
     Args:
         text (str): Label text next to the checkbox.
@@ -55,7 +55,7 @@ def create_checkbox(text, checked=False, callback=None):
 
 def create_svg_text_button(svg_path, text, icon_size=20, tooltip="", callback=None):
     """
-    Creates a QPushButton with SVG icon and text.
+    Creates a `QPushButton` with SVG icon and text.
 
     Args:
         svg_path (str): Path to SVG icon.
@@ -86,7 +86,23 @@ def create_svg_text_button(svg_path, text, icon_size=20, tooltip="", callback=No
 class LoadingIndicator(QWidget):
     """
     A spinning arc-based loading indicator widget.
-    Can be shown during background loading operations.
+
+    This widget displays a rotating arc animation to indicate that a background
+    operation (such as data loading or initialization) is in progress. It is
+    designed to be lightweight and self-contained, relying on a QTimer-driven
+    angle update and custom painting via QPainter.
+
+    The widget automatically centers itself within its parent when shown or when
+    the parent is resized.
+
+    Attributes:
+        angle (int):
+            Current rotation angle of the arc, in degrees. This value is incremented
+            periodically by the internal timer to animate the spinner.
+
+        timer (QTimer):
+            Timer used to update the rotation angle at a fixed interval, driving
+            the animation loop.
     """
 
     def __init__(self, parent=None):

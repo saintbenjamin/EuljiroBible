@@ -21,6 +21,7 @@ def should_show_overlay(file_path):
     of the specified verse output file.
 
     The overlay should only be displayed if:
+
     - The file exists, and
     - The file contains non-empty text (ignoring whitespace).
 

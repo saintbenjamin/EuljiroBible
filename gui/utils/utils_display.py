@@ -15,15 +15,20 @@ from PySide6.QtWidgets import QApplication
 
 def get_display_descriptions():
     """
-    Returns a list of human-readable descriptions for all connected displays.
+    Return human-readable descriptions of all connected displays.
 
-    Each description includes the display number, resolution, and position.
+    Each entry includes:
 
-    Example:
-        ["Display 1: 1920x1080 @ (0,0)", "Display 2: 1280x1024 @ (1920,0)"]
+    - Display index (1-based)
+    - Screen resolution (width × height)
+    - Top-left screen position in virtual desktop coordinates
+
+    This helper is typically used to populate display-selection dropdowns
+    for overlay or presentation output configuration.
 
     Returns:
-        list[str]: List of display descriptions in the format "Display N: WxH @ (X,Y)".
+        list[str]: Display descriptions in the format
+            "Display N: WxH @ (X,Y)".
     """
     return [
         f"Display {i+1}: {geo.width()}x{geo.height()} @ ({geo.x()},{geo.y()})"

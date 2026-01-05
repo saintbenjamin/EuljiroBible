@@ -22,24 +22,44 @@ from PySide6.QtWidgets import (
 
 from gui.ui.common import create_svg_text_button
 
-
 class TabKeywordUI:
     """
-    Constructs the visual layout and widget structure for the keyword search tab.
-    Provides controls for version selection, keyword input, search execution,
-    result display, and slide show output.
+    UI builder mixin for the keyword search tab.
+
+    This class constructs the widget layout and connects UI events for keyword
+    searching, including version selection, keyword input, search mode toggles,
+    result table display, summary output, and overlay export controls.
+
+    The actual business logic (search, export, clearing output) is delegated to the
+    owning tab class and its logic backend (e.g., TabKeyword and TabKeywordLogic).
+
+    Attributes:
+        get_polling_status (Callable[[], bool]): Callback used to determine whether
+            polling mode is enabled (controls button visibility).
+        get_always_show_setting (Callable[[], bool]): Callback used to determine
+            whether buttons should always be shown regardless of polling state.
+        version_box (QComboBox): Dropdown for selecting a Bible version.
+        keyword_input (QLineEdit): Text input for search keywords.
+        radio_and (QRadioButton): Search mode radio for "all words" style search.
+        radio_compact (QRadioButton): Search mode radio for "exact phrase" search.
+        radio_group (QButtonGroup): Radio button group for mutually exclusive modes.
+        search_button (QPushButton): Button triggering a keyword search.
+        select_button (QPushButton): Button exporting the selected verse.
+        clear_button (QPushButton): Button clearing overlay output.
+        table (QTableView): Result table view for search hits.
+        summary_title_label (QLabel): Label for the summary section.
+        summary_box (QTextEdit): Read-only summary output widget.
     """
 
     def init_ui(self, version_list, get_polling_status, get_always_show_setting):
         """
-        Initializes the UI layout and binds widget events.
+        Initialize the UI layout and bind widget events.
 
-        :param version_list: List of available Bible version strings
-        :type version_list: list[str]
-        :param get_polling_status: Callback for checking polling toggle state
-        :type get_polling_status: Callable[[], bool]
-        :param get_always_show_setting: Callback for checking 'always show' setting
-        :type get_always_show_setting: Callable[[], bool]
+        Args:
+            version_list (list[str]): List of available Bible version strings.
+            get_polling_status (Callable[[], bool]): Callback for checking polling toggle state.
+            get_always_show_setting (Callable[[], bool]): Callback for checking the
+                "always show buttons" setting.
         """
         self.get_polling_status = get_polling_status
         self.get_always_show_setting = get_always_show_setting
@@ -128,9 +148,10 @@ class TabKeywordUI:
 
     def update_button_visibility(self):
         """
-        Toggles the visibility of the Output and Clear buttons.
+        Update visibility of the Output and Clear buttons.
 
-        Visibility is determined by polling status or the 'always show' setting.
+        Button visibility is determined by the effective polling state, defined as:
+        polling enabled OR the "always show buttons" setting enabled.
         """
         poll_enabled = self.get_polling_status()
         always_show = self.get_always_show_setting()
@@ -141,12 +162,13 @@ class TabKeywordUI:
 
     def on_double_click_save(self, index):
         """
-        Handles double-click event on the result table.
+        Handle a double-click event on the result table.
 
-        Delegates the save logic to TabKeywordLogic.
+        If a valid column is clicked, this delegates saving/exporting logic to the
+        logic backend through the owning tab instance.
 
-        :param index: Clicked QModelIndex
-        :type index: QModelIndex
+        Args:
+            index (QModelIndex): Clicked table index.
         """
         if index.column() < 0:
             return

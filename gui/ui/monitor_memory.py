@@ -8,8 +8,21 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Popup window to monitor current memory usage periodically.
-Logs to file and provides GUI interface for checking memory in real time.
+Popup window for monitoring the current Python process memory usage.
+
+This module provides a lightweight GUI tool that periodically measures the
+resident set size (RSS) of the running process, appends the record to a log file,
+and displays the latest values in real time.
+
+Key behaviors:
+
+- Memory is sampled at a user-configurable interval (seconds).
+- Each sample is appended to ``paths.MEMORY_LOG_FILE`` (typically ``memory_log.txt``).
+- Entries exceeding a fixed warning threshold (currently 400 MB) are highlighted in the UI and marked as warnings in the log output.
+
+Note:
+- This tool is intended for runtime debugging and stability monitoring.
+- The monitor does not attempt to manage or reduce memory; it only reports.
 """
 
 import psutil, os
@@ -22,20 +35,47 @@ from PySide6.QtGui import QTextCursor, QTextCharFormat, QColor
 from core.config import paths
 from gui.config.config_manager import ConfigManager
 
-
 class MonitorMemory(QWidget):
     """
-    Popup QWidget that monitors and displays Python process memory usage.
-    Automatically logs to memory_log.txt and shows warnings when exceeding threshold.
+    Popup ``QWidget`` that monitors and displays the current process memory usage.
+
+    The widget periodically reads RSS memory usage using ``psutil`` and:
+
+    - Appends log lines to ``paths.MEMORY_LOG_FILE``.
+    - Displays the log in a read-only ``QTextEdit`` in real time.
+    - Highlights entries in red when the warning threshold is exceeded.
+
+    Attributes:
+        interval_input (QLineEdit):
+            Text input containing the monitoring interval in seconds.
+
+        save_btn (QPushButton):
+            Button that saves the interval to settings and applies it immediately.
+
+        text_area (QTextEdit):
+            Read-only area showing the rolling log output (styled by warning level).
+
+        close_btn (QPushButton):
+            Button that stops monitoring and closes the window.
+
+        timer (QTimer):
+            Periodic timer that triggers memory sampling.
+
+        interval_sec (int):
+            Effective monitoring interval in seconds (clamped to at least 1).
     """
 
     def __init__(self, interval_sec=5, parent=None):
         """
-        Initializes the memory monitor widget and UI layout.
+        Initialize the memory monitor widget and build the UI.
 
         Args:
-            interval_sec (int): Monitoring interval in seconds.
-            parent (QWidget, optional): Parent window.
+            interval_sec (int):
+                Initial monitoring interval in seconds. Values less than 1 are clamped
+                to 1 when applied.
+
+            parent (QWidget, optional):
+                Optional parent widget.
         """
         super().__init__(parent)
         self.setWindowTitle("Memory Monitor")
@@ -76,18 +116,31 @@ class MonitorMemory(QWidget):
 
     def set_interval(self, interval_sec):
         """
-        Sets the interval between memory checks.
+        Apply a new monitoring interval to the internal timer.
+
+        The value is clamped to at least 1 second.
 
         Args:
-            interval_sec (int): Interval in seconds.
+            interval_sec (int):
+                Interval in seconds.
         """
         self.interval_sec = max(1, interval_sec)
         self.timer.setInterval(self.interval_sec * 1000)
 
     def save_interval(self):
         """
-        Saves the user-entered interval to the settings file and updates the timer.
-        Displays confirmation or error in the log area.
+        Save the user-entered interval to settings and apply it immediately.
+
+        Behavior:
+
+        - Reads the interval from ``self.interval_input``.
+        - Updates ``self.timer`` interval.
+        - Persists the value to settings under ``memory_interval_sec``.
+        - Writes an info/error message into ``self.text_area``.
+
+        Note:
+            - This method only validates that the input can be parsed as an integer.
+            - Non-integer input is treated as an error.
         """
         try:
             interval = int(self.interval_input.text())
@@ -103,8 +156,17 @@ class MonitorMemory(QWidget):
 
     def record_and_display_memory(self):
         """
-        Measures current memory usage, logs to file, and displays in UI.
-        Highlights warnings when memory exceeds 400MB.
+        Sample current RSS memory usage, append it to the log file, and render it in the UI.
+
+        Output format:
+            ``[<timestamp>] Memory: <MB> MB``
+
+        Warning behavior:
+            If the sampled memory exceeds a fixed threshold (currently 400 MB),
+            the log line is marked with ``[WARNING]`` and colored red in the UI.
+
+        Failures:
+            Any unexpected exception is appended to the UI output area as plain text.
         """
         try:
             process = psutil.Process(os.getpid())
@@ -136,7 +198,7 @@ class MonitorMemory(QWidget):
 
     def close_monitor(self):
         """
-        Stops the timer and closes the widget.
+        Stop the monitoring timer and close the widget.
         """
         self.timer.stop()
         self.close()

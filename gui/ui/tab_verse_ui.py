@@ -22,21 +22,67 @@ from PySide6.QtGui import QStandardItemModel
 
 from gui.ui.common import create_svg_text_button, LoadingIndicator
 
-
 class TabVerseUI:
     """
-    Provides the full layout for the TabVerse interface.
+    UI builder mixin for the verse tab.
 
-    Contains UI components for version selection, book/chapter/verse input,
-    and buttons to display, save, or clear verse text.
+    This class constructs the widget layout and connects UI events for verse lookup,
+    including version selection checkboxes, book/chapter/verse inputs, navigation
+    buttons, and a read-only display panel for rendered verse output.
+
+    The owning tab class (TabVerse) is responsible for providing:
+
+    - selection_manager (TabVerseSelectionManager)
+    - logic (TabVerseLogic)
+    - handlers such as get_reference(), apply_output_text(), shift_verse(), clear_outputs()
+
+    Attributes:
+        version_scroll (QScrollArea): Scroll area containing the version checkbox grid.
+        version_widget (QWidget): Container widget for the version checkbox grid.
+        version_layout (QGridLayout): Grid layout holding version selection checkboxes.
+
+        enter_state (int): Enter-key state machine (0 = ready to display, 1 = ready to export).
+        use_alias (bool): Whether to display version aliases instead of full version names.
+
+        alias_toggle_btn (QPushButton): Toggle button switching alias/full version summary mode.
+        version_summary_label (QLabel): Label summarizing currently selected Bible versions.
+
+        book_label (QLabel): Label for the book selector.
+        chapter_label (QLabel): Label for the chapter selector.
+        verse_label (QLabel): Label for the verse input field.
+
+        book_combo (QComboBox): Editable dropdown for selecting a book name.
+        chapter_input (QComboBox): Editable dropdown for chapter selection.
+        verse_input (QLineEdit): Verse input field supporting single verses or ranges.
+
+        search_btn (QPushButton): Button that triggers verse display.
+        save_btn (QPushButton): Button that exports the currently formatted verse output.
+        clear_display_btn (QPushButton): Button that clears output destination and display.
+        prev_verse_btn (QPushButton): Button that navigates to the previous verse.
+        next_verse_btn (QPushButton): Button that navigates to the next verse.
+
+        input_layout (QHBoxLayout): Layout containing book/chapter/verse inputs and buttons.
+        button_layout (QHBoxLayout): Layout containing action/navigation buttons.
+
+        display_box (QTextEdit): Read-only display widget for rendered verse output.
+        loading_indicator (LoadingIndicator): Overlay indicator shown during long operations.
     """
 
     def init_ui(self, version_list):
         """
-        Initializes the full verse tab interface layout.
+        Initialize and assemble the full verse tab UI.
 
-        :param version_list: List of Bible versions to populate as checkboxes
-        :type version_list: list[str]
+        This builds:
+
+        - A scrollable grid of version selection checkboxes
+        - Alias/full-name toggle and selected-version summary label
+        - Book/chapter/verse input row (with editable combos)
+        - Action buttons for display/export/clear and verse navigation
+        - A read-only display box for rendered output
+        - A loading indicator overlay
+
+        Args:
+            version_list (list[str]): List of Bible versions used to create checkboxes.
         """
         # Scrollable checkbox grid for Bible versions
         self.version_scroll = QScrollArea()
@@ -193,9 +239,10 @@ class TabVerseUI:
 
     def _on_display_verse(self):
         """
-        Trigger display of Bible verse when Search button is clicked.
+        Display the current verse reference.
 
-        Uses `self.get_reference`, `self.verse_input`, and `self.apply_output_text`.
+        This is invoked by the Search button and delegates rendering to the logic layer
+        using the current reference resolver and output applicator.
         """
         output = self.logic.display_verse(
             self.get_reference,
@@ -207,9 +254,10 @@ class TabVerseUI:
 
     def _on_save_verse(self):
         """
-        Saves the currently displayed verse.
+        Export the currently displayed verse output.
 
-        Invoked by the Save button; shows critical dialog on error.
+        This is invoked by the Save button and delegates persistence to the logic layer.
+        A critical dialog is shown if saving fails.
         """
         try:
             self.logic.save_verse(self.formatted_verse_text)

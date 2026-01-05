@@ -23,19 +23,73 @@ from PySide6.QtGui import QFont
 
 from gui.ui.common import create_button, create_svg_text_button
 
-
 class TabSettingsUI:
     """
-    Builds and applies the layout for the settings tab.
-    Includes configuration for UI font, overlay font, display mode, and polling interval.
+    UI builder mixin for the settings tab.
+
+    This class constructs the widget layout and connects UI events for configuring
+    application settings, including application font selection, theme toggling,
+    overlay display options, output path selection, and polling interval controls.
+
+    The actual persistence and application of most settings is delegated to the
+    owning tab class (e.g., TabSettings) and its logic backend (TabSettingsLogic).
+
+    Attributes:
+        main_group (QGroupBox): Group box containing application font and theme controls.
+        overlay_group (QGroupBox): Group box containing overlay/polling controls.
+
+        font_family_label (QLabel): Label for the application font family selector.
+        font_family_combo (QComboBox | QFontComboBox): Application font family selector.
+        font_size_label (QLabel): Label for the application font size selector.
+        font_size_combo (QComboBox): Application font size selector.
+        font_weight_label (QLabel): Label for the application font weight selector.
+        font_weight_combo (QComboBox): Application font weight selector.
+        theme_toggle_btn (QPushButton): Button that toggles light/dark theme.
+        always_on_off_checkbox (QCheckBox): Checkbox controlling whether overlay on/off
+            controls are always visible.
+
+        display_combo (QComboBox): Dropdown for selecting the target display/screen.
+        display_font_family_label (QLabel): Label for overlay font family selector.
+        display_font_family_combo (QComboBox | QFontComboBox): Overlay font family selector.
+        display_font_size_label (QLabel): Label for overlay font size selector.
+        display_font_size_combo (QComboBox): Overlay font size selector.
+        display_font_weight_label (QLabel): Label for overlay font weight selector.
+        display_font_weight_combo (QComboBox): Overlay font weight selector.
+        display_font_color_label (QLabel): Label for overlay text color selector.
+        text_color_btn (QPushButton): Button showing the current overlay text color.
+        bg_alpha_label (QLabel): Label for overlay background alpha slider.
+        alpha_slider (QSlider): Slider controlling overlay background alpha (0–100 scale).
+        bg_color_label (QLabel): Label for overlay background color selector.
+        bg_color_btn (QPushButton): Button showing the current overlay background color.
+
+        path_label (QLabel): Label for output path selector.
+        output_edit (QLineEdit): Text field containing the verse output path.
+        browse_btn (QPushButton): Button that opens a file dialog to select output path.
+
+        overlay_mode_combo (QComboBox): Dropdown selecting overlay mode ("fullscreen" or "resizable").
+        poll_label (QLabel): Label for polling interval input.
+        poll_input (QLineEdit): Text field for polling interval (milliseconds).
+        poll_save (QPushButton): Button that saves the polling interval.
+
+        main_layout (QVBoxLayout): Layout for the main settings group.
+        overlay_layout (QVBoxLayout): Layout for the overlay settings group.
     """
 
     def init_ui(self):
         """
-        Initialize the full settings UI.
+        Initialize and assemble the full settings UI.
 
-        This method constructs all font-related configuration widgets, theme toggles,
-        overlay settings, output paths, and polling controls.
+        This constructs:
+
+        - Application font family/size/weight controls
+        - Theme toggle and "always show" option
+        - Overlay display selection and overlay font controls
+        - Overlay colors and background alpha controls
+        - Verse output path selector
+        - Overlay mode selector and polling interval controls
+
+        All relevant widgets are connected to dynamic update handlers so changes can be
+        applied immediately and persisted through the logic layer.
         """
         # --------------------------
         # Main Group: App Font and Theme

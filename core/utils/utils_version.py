@@ -21,12 +21,12 @@ def refresh_full_version_list():
     """
     Scans the Bible data directory for available versions, applies sort order, and returns the list.
 
-    Returns:
-        list[str]: Alphabetically or custom-ordered list of available Bible versions.
-
     Example:
         >>> refresh_full_version_list()
         ['KJV', 'NIV', 'NKRV', 'RSV']
+
+    Returns:
+        list[str]: Alphabetically or custom-ordered list of available Bible versions.
     """
     loader = BibleDataLoader()
 

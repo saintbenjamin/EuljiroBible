@@ -8,9 +8,27 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-CLI command handler for EuljiroBible.
 
-Parses command-line arguments and coordinates verse lookup and display.
+CLI command handlers for EuljiroBible.
+
+This module contains the top-level command functions used by the CLI entry point:
+
+- :func:`run_bible_command` for verse lookup and formatted verse output.
+- :func:`run_search_command` for keyword search and result printing.
+
+Design notes:
+
+- Argument parsing here is intentionally lightweight. Deep validation and output
+  formatting is delegated to shared core logic (e.g., :mod:`core.logic.verse_logic`).
+- CLI error messages are expected to be English-only by project convention.
+- Version names in the CLI are provided via a simplified alias map loaded from
+  :data:`core.config.paths.ALIASES_VERSION_CLI_FILE`.
+
+Limitations:
+
+- CLI display for Right-to-Left (RTL) scripts (Hebrew/Arabic/etc.) depends on the
+  terminal/font environment and may not render ideally. A note is printed when a
+  likely RTL version is detected.
 """
 
 import json
@@ -28,10 +46,23 @@ data_path = paths.BIBLE_DATA_DIR
 
 def handle_cli_metadata(args):
     """
-    Handle CLI metadata options like ``--help``, ``--version``, and ``--about``.
+    Handle CLI metadata options for the verse lookup command.
+
+    This function checks for single-token metadata options and prints an
+    appropriate message. If a metadata option is handled, the caller should
+    exit early without further parsing.
+
+    Supported options:
+        - ``--help`` / ``-h``: Print usage and examples.
+        - ``--version`` / ``-v``: Print CLI version string.
+        - ``--about``: Print author and license information.
+
+    Args:
+        args (list[str]): Raw CLI arguments *for the bible command* (excluding the script name).
 
     Returns:
-        bool: True if metadata was handled and command should exit.
+        bool: ``True`` if a metadata option was handled and the command should exit,
+        otherwise ``False``.
     """
     if len(args) != 1:
         return False
@@ -65,13 +96,19 @@ def handle_cli_metadata(args):
 
 def handle_search_metadata(args):
     """
-    Handle CLI metadata options for keyword search command.
+    Handle CLI metadata options for the keyword search command.
+
+    Supported options:
+        - ``--help`` / ``-h``: Print usage and examples.
+        - ``--version`` / ``-v``: Print CLI version string.
+        - ``--about``: Print author and license information.
 
     Args:
-        args (list[str]): CLI args
+        args (list[str]): Raw CLI arguments for the ``search`` command.
 
     Returns:
-        bool: True if metadata handled and program should exit.
+        bool: ``True`` if a metadata option was handled and the command should exit,
+        otherwise ``False``.
     """
     if len(args) != 1:
         return False
@@ -105,10 +142,13 @@ def handle_search_metadata(args):
 
 def show_usage_and_versions(cli_aliases):
     """
-    Print general CLI usage and list of available version aliases.
+    Print general CLI usage for verse lookup and a list of available version aliases.
 
     Args:
-        cli_aliases (list[str]): List of CLI aliases to display.
+        cli_aliases (list[str]): List of CLI aliases to display (e.g., ``["NKRV", "KJV"]``).
+
+    Returns:
+        None
     """
     print(f"EuljiroBible v{APP_VERSION} (CLI interface) - Bible Verse Lookup Tool")
     print("For more information, use: --about or --help\n")
@@ -118,10 +158,13 @@ def show_usage_and_versions(cli_aliases):
 
 def show_search_usage(cli_aliases):
     """
-    Print usage information and available versions for keyword search command.
+    Print usage for keyword search and a list of available version aliases.
 
     Args:
-        cli_aliases (list[str]): CLI version aliases
+        cli_aliases (list[str]): CLI version aliases to display.
+
+    Returns:
+        None
     """
     print(f"EuljiroBible v{APP_VERSION} (CLI interface) - Bible Keyword Search")
     print("For more information, use: --about or --help\n")
@@ -131,10 +174,27 @@ def show_search_usage(cli_aliases):
 
 def load_cli_alias_map():
     """
-    Load CLI alias map from JSON file.
+    Load the CLI alias map from the configured JSON file.
+
+    The alias map is expected to be a JSON object mapping *full version names*
+    to *CLI-friendly aliases* (strings). 
+    
+    Example shape::
+
+        {
+          "대한민국 개역개정 (1998)": "NKRV",
+          "King James Version": "KJV"
+        }
 
     Returns:
-        tuple: (alias_map, cli_aliases)
+        tuple[dict, list[str]]: ``(alias_map, cli_aliases)`` where:
+
+        - ``alias_map`` maps full version name -> CLI alias.
+        - ``cli_aliases`` is a list of CLI aliases (values of the map).
+
+    Raises:
+        FileNotFoundError: If the alias file does not exist.
+        json.JSONDecodeError: If the alias file is not valid JSON.
     """
     with open(alias_file, encoding="utf-8") as f:
         alias_map = json.load(f)
@@ -143,14 +203,27 @@ def load_cli_alias_map():
 
 def parse_versions_from_args(args, alias_map):
     """
-    Parse version aliases from CLI args.
+    Parse one or more version aliases from the beginning of CLI arguments.
+
+    Parsing strategy:
+        - Scan tokens left-to-right.
+        - For each token, check if it matches any alias in ``alias_map.values()``.
+        - Stop at the first token that does not match a known alias.
+        - The remaining tokens are treated as the Bible reference portion.
 
     Args:
         args (list[str]): Raw CLI arguments.
-        alias_map (dict): Full-to-short alias mapping.
+        alias_map (dict): Full-to-short alias mapping (full version -> CLI alias).
 
     Returns:
-        tuple: (versions, remaining_args)
+        tuple[list[str], list[str]]: ``(versions, remaining_args)`` where:
+
+        - ``versions`` is a list of full version names (keys from ``alias_map``).
+        - ``remaining_args`` is the remainder of tokens after the version list.
+
+    Note:
+        - If no version tokens are found, ``versions`` will be an empty list.
+        - Callers should validate and emit a helpful error.
     """
     # Parse versions from args
     versions = []
@@ -172,13 +245,19 @@ def resolve_search_version(version_alias, alias_map, keywords):
     """
     Resolve the full Bible version name for keyword search.
 
+    Keyword search requires exactly one version. This helper:
+
+    - Validates that ``version_alias`` exists in the alias map.
+    - Ensures none of the remaining keyword tokens look like a version alias.
+    - Returns the full version name corresponding to ``version_alias``.
+
     Args:
-        version_alias (str): CLI alias given by user
-        alias_map (dict): Full-to-short alias map
-        keywords (list[str]): User-specified search keywords
+        version_alias (str): CLI alias provided by the user.
+        alias_map (dict): Full-to-short alias map (full version -> CLI alias).
+        keywords (list[str]): User-supplied keyword tokens.
 
     Returns:
-        str or None: Full version name if found; otherwise None
+        str | None: Full version name if resolved; otherwise ``None`` (after printing an error).
     """
     cli_aliases = set(alias_map.values())
 
@@ -197,11 +276,21 @@ def parse_and_validate_reference(remaining):
     """
     Join and validate Bible reference tokens.
 
+    Expected token shape::
+
+        <book> <chapter[:verse[-verse]]>
+
+    This function joins the two tokens into a single reference string and uses
+    :func:`core.utils.bible_parser.parse_reference` for parsing.
+
     Args:
-        remaining (list[str]): List of tokens representing reference.
+        remaining (list[str]): Tokens representing the reference portion.
 
     Returns:
-        tuple or None: (book, chapter, verse_range) if valid; otherwise None.
+        tuple | None: ``(book, chapter, verse_range)`` if valid; otherwise ``None``.
+
+    Side effects:
+        Prints an ``[ERROR]`` message on invalid input.
     """
     # Expecting: <book> <chapter[:verse[-verse]]>
     if len(remaining) != 2:
@@ -219,31 +308,22 @@ def parse_and_validate_reference(remaining):
 
 def detect_lang_code_from_aliases(versions, alias_map):
     """
-    Detect a likely language code from user-supplied version aliases.
+    Heuristically detect a language code based on selected versions.
 
-    This is a lightweight heuristic for deciding whether the output should be
-    treated as a right-to-left (RTL) language. It scans each version token
-    (case-insensitive) and matches it against a small keyword list per language.
+    This is a CLI-only heuristic primarily used to warn about potential RTL rendering.
+    The detection checks the lowercased version string (full canonical names in this
+    module) against a small keyword list.
 
     Note:
-        - ``alias_map`` is currently unused, but kept in the signature for
-          compatibility with existing call sites and potential future expansion
-          (e.g., mapping canonical version names to metadata).
-        - If no RTL-related keyword is found, this defaults to Korean ("ko").
+        ``alias_map`` is currently unused, but kept for signature stability and
+        potential future mapping to version metadata.
 
     Args:
-        versions (list[str]): Version tokens or aliases provided by the user.
-            Example: ["NKRV", "WLC"].
-        alias_map (dict): Version alias mapping (reserved for future use).
+        versions (list[str]): Full version names selected for output.
+        alias_map (dict): Full-to-short alias mapping (reserved for future use).
 
     Returns:
-        str: Detected language code. One of:
-
-            - "he" (Hebrew)
-            - "ar" (Arabic)
-            - "fa" (Persian/Farsi)
-            - "ur" (Urdu)
-            - "ko" (default fallback)
+        str: Language code among ``{"he", "ar", "fa", "ur", "ko"}``.
     """
     rtl_map = {
         "he": ["히브리어", "hebrew", "heb", "wlc", "mhb"],
@@ -262,14 +342,23 @@ def detect_lang_code_from_aliases(versions, alias_map):
 
 def run_display_logic(versions, book, chapter, verse_range, alias_map):
     """
-    Execute the main display logic for CLI output.
+    Execute the CLI verse display pipeline.
+
+    This function:
+
+    1) Loads the selected Bible versions.
+    2) Validates that the requested book exists in the first version.
+    3) Invokes :func:`core.logic.verse_logic.display_verse_logic` in CLI mode, sending output to stdout.
 
     Args:
-        versions (list): Full version names.
-        book (str): Resolved book name.
+        versions (list[str]): Full version names to load and display.
+        book (str): Canonical book key expected by :class:`BibleDataLoader`.
         chapter (int): Chapter number.
-        verse_range (tuple): Start and optional end verse.
-        alias_map (dict): CLI alias map.
+        verse_range (tuple[int, int]): Verse range ``(start, end)``.
+        alias_map (dict): Full-to-short alias mapping (for version aliases in output).
+
+    Returns:
+        None
     """
     bible_data = BibleDataLoader(json_dir=name_path, text_dir=data_path)
     for v in versions:
@@ -305,11 +394,18 @@ def run_display_logic(versions, book, chapter, verse_range, alias_map):
 
 def run_keyword_search(full_version, keywords):
     """
-    Run keyword search and print results.
+    Run a keyword search and print results to stdout.
+
+    This function loads the specified Bible version through
+    :class:`core.utils.bible_keyword_searcher.BibleKeywordSearcher`, runs the search,
+    prints each matching verse, then prints per-keyword frequencies and total count.
 
     Args:
         full_version (str): Full Bible version name.
-        keywords (list[str]): List of keywords to search.
+        keywords (list[str]): Keywords to search (tokens). They are joined with spaces.
+
+    Returns:
+        None
     """
     try:
         searcher = BibleKeywordSearcher(version=full_version)
@@ -337,9 +433,14 @@ def handle_version_only(version, alias_map):
     """
     Handle the case where only the version is specified.
 
+    This prints the general usage plus the list of available books in that version.
+
     Args:
         version (str): Full Bible version name.
-        alias_map (dict): Full-to-short alias mapping.
+        alias_map (dict): Full-to-short alias mapping (full version -> CLI alias).
+
+    Returns:
+        None
     """
     bible_data = BibleDataLoader(json_dir=name_path, text_dir=data_path)
     try:
@@ -355,14 +456,22 @@ def handle_version_only(version, alias_map):
 
 def handle_book_only(version, raw_book):
     """
-    Handle the case where only a book name is given (show chapter count).
+    Handle the case where a version and book are provided, but no chapter/verse.
+
+    This prints the chapter count for the requested book.
 
     Args:
         version (str): Full Bible version name.
-        raw_book (str): User input book name.
+        raw_book (str): User-supplied book token (may be localized/abbreviated).
+
+    Returns:
+        None
     """
     bible_data = BibleDataLoader(json_dir=name_path, text_dir=data_path)
     bible_data.load_version(version)
+
+    # NOTE: resolve_book_name signature may depend on your parser implementation.
+    # Here we preserve your current call shape and only document expectations.
     book = resolve_book_name(raw_book)
     if not book or book not in bible_data.get_verses(version):
         print(f"[ERROR] Unknown book name: '{raw_book}'")
@@ -375,20 +484,35 @@ def handle_book_only(version, raw_book):
 
 def run_bible_command(args):
     """
-    Main CLI handler for parsing and executing Bible verse search commands.
+    Entry point for the CLI ``bible`` command.
 
-    Example:
-        - ``$ bible NKRV John 3:16``
-        - ``$ bible NKRV NIV John 3``
-        - ``$ bible NKRV``
+    Supported invocation patterns::
+
+        $ bible                          # show usage and available versions
+        $ bible NKRV                     # list books available in NKRV
+        $ bible NKRV John                # show chapter count for John
+        $ bible NKRV John 3:16           # show a single verse
+        $ bible NKRV John 3:16-18        # show a verse range
+        $ bible KJV NIV John 3:16        # show the same reference in multiple versions
 
     Behavior:
-        - Prints usage/help if no args.
-        - Lists books if only version and book given.
-        - Shows verse(s) if full reference is given.
+
+    - Handles metadata flags (``--help``, ``--version``, ``--about``).
+    - Loads alias map and parses one or more version tokens from the front.
+    - If only a version is given, prints available books.
+    - If version + book are given, prints chapter count.
+    - If a full reference is provided, prints formatted verse output via shared logic.
 
     Args:
-        args (list[str]): Command-line arguments excluding the script name.
+        args (list[str]): Command-line arguments excluding the script name and excluding the ``bible`` token.
+
+    Returns:
+        None
+
+    Note:
+        - This function assumes at least one valid version alias is supplied when
+        verse lookup is attempted. 
+        - If no version is found, callers should see usage.
     """
     if handle_cli_metadata(args):
         return
@@ -419,13 +543,29 @@ def run_bible_command(args):
 
 def run_search_command(args):
     """
-    CLI keyword search command.
+    Entry point for the CLI ``search`` command.
 
     Usage::
 
         bible search <version> <keyword1> [keyword2 ...]
-    """
 
+    Examples::
+
+        bible search NKRV 믿음
+        bible search KJV faith grace
+
+    Behavior:
+
+    - Handles metadata flags (``--help``, ``--version``, ``--about``).
+    - Requires exactly one version alias.
+    - Runs keyword search and prints matches and keyword frequencies.
+
+    Args:
+        args (list[str]): Command-line arguments excluding the script name and excluding the ``search`` token.
+
+    Returns:
+        None
+    """
     if handle_search_metadata(args):
         return
 

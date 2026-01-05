@@ -9,7 +9,7 @@
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
 GUI environment setup and main launcher logic for EuljiroBible.
-Initializes QApplication, verifies environment, loads settings, and launches the main window.
+Initializes `QApplication`, verifies environment, loads settings, and launches the main window.
 """
 
 import sys
@@ -33,6 +33,17 @@ from gui.utils.utils_save import save_user_settings
 from gui.utils.utils_validation import verify_bible_data
 
 def run_gui():
+    """
+    Initialize and run the EuljiroBible GUI application.
+
+    This function prepares the runtime environment, initializes the Qt application,
+    loads user settings, verifies required resources (such as Bible data),
+    and launches the main application window. It also ensures that user settings
+    are saved on normal exit and that fatal errors are handled via GUI-safe dialogs.
+
+    Raises:
+        Exception: Any unhandled exception during GUI initialization or execution is caught internally and reported using a critical error dialog.
+    """
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     log_debug('EuljiroBible started.')
 
@@ -86,7 +97,7 @@ def main():
     """
     Public GUI entry point.
 
-    This function is called when gui_main.py is executed as the main script.
+    This function is called when ``gui_main.py`` is executed as the main script.
     """
     run_gui()
 

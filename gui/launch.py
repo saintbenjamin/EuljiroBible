@@ -24,16 +24,33 @@ from gui.utils.state_saver import save_settings_from_ui
 
 def launch(app, saved_versions, settings, app_version):
     """
-    Launches the EuljiroBible main window.
+    Launch and initialize the main EuljiroBible GUI window.
+
+    This function performs the full startup sequence:
+
+    - Builds the full Bible version list for UI display.
+    - Lazily loads Bible data for the last-used version set.
+    - Applies platform-specific app icon.
+    - Applies theme (dark/light) based on user setting, with an auto fallback.
+    - Applies application-wide font settings.
+    - Creates and shows :class:`gui.ui.window_main.WindowMain`.
+    - Restores language and last UI state (versions, book/chapter/verse).
+    - Finalizes selection summary and persists the restored state.
 
     Args:
-        app (QApplication): Application instance.
-        saved_versions (list): Previously selected Bible versions.
-        settings (dict): Application settings.
-        app_version (str): Current application version.
+        app (QApplication):
+            The running QApplication instance.
+        saved_versions (list[str] | None):
+            Previously selected version identifiers (may be ignored if
+            `settings["last_versions"]` exists).
+        settings (dict):
+            Application settings dictionary loaded from disk.
+        app_version (str):
+            Application version string (for window title/about display).
 
     Returns:
-        WindowMain: The main application window instance.
+        WindowMain:
+            The initialized main window instance.
     """
     from gui.ui.window_main import WindowMain
 

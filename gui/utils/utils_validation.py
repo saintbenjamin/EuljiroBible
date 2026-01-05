@@ -20,9 +20,19 @@ from gui.constants import messages
 
 def verify_bible_data():
     """
-    Verifies that Bible data directory and required JSON files exist.
+    Verify the presence and validity of the Bible data directory.
 
-    This function displays an error message and exits the app if the data directory or files are missing.
+    This function checks whether the configured Bible data directory exists
+    and whether it contains at least one JSON file. These JSON files are
+    required for loading Bible text data at runtime.
+
+    If the directory does not exist or contains no JSON files, a critical
+    error dialog is shown to the user and the application terminates
+    immediately.
+
+    Raises:
+        SystemExit: If the Bible data directory is missing or contains no
+            valid JSON files.
     """
     if not os.path.isdir(paths.BIBLE_DATA_DIR):
         msg = messages.ERROR_MESSAGES["bible_data_missing"].format(path=paths.BIBLE_DATA_DIR)

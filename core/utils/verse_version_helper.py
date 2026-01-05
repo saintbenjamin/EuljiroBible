@@ -21,30 +21,38 @@ class VerseVersionHelper:
     """
     Handles logic related to selected Bible versions and finding common books.
 
-    :param bible_data: Bible data loader instance
-    :type bible_data: BibleDataLoader
-    :param version_layout: Layout containing QCheckBox widgets for each version
-    :type version_layout: QLayout
+    This helper reads the version-selection state from a layout containing
+    version checkboxes, computes the intersection of available books across
+    selected versions, and provides stable sorting for version display.
+
+    Attributes:
+        bible_data (BibleDataLoader):
+            Shared Bible data loader used to resolve version/book metadata and
+            access per-version verse structures.
+
+        version_layout (QLayout):
+            Layout containing version ``QCheckBox`` widgets. Each checkbox is
+            expected to expose a ``version_key`` attribute holding the full
+            internal version identifier (not the alias label shown to users).
     """
 
     def __init__(self, bible_data, version_layout):
         """
         Initialize the helper with data source and layout.
 
-        :param bible_data: Instance of BibleDataLoader
-        :type bible_data: BibleDataLoader
-        :param version_layout: Layout containing QCheckBox widgets
-        :type version_layout: QLayout
+        Args:
+            bible_data (BibleDataLoader): Instance of BibleDataLoader.
+            version_layout (QLayout): Layout containing QCheckBox widgets.
         """
         self.bible_data = bible_data
         self.version_layout = version_layout
 
     def get_selected_versions(self):
         """
-        Returns a list of selected Bible versions based on checked checkboxes.
+        Return a list of selected Bible versions based on checked checkboxes.
 
-        :return: List of selected version keys
-        :rtype: list[str]
+        Returns:
+            list[str]: List of selected version keys.
         """
         selected = []
         for i in range(self.version_layout.count()):
@@ -60,10 +68,10 @@ class VerseVersionHelper:
 
     def get_common_books(self):
         """
-        Find common books among all selected Bible versions.
+        Find books common to all selected Bible versions.
 
-        :return: List of book names common to all selected versions
-        :rtype: list[str]
+        Returns:
+            list[str]: List of book names common to all selected versions.
         """
         versions = self.get_selected_versions()
         if not versions:
@@ -80,12 +88,13 @@ class VerseVersionHelper:
 
     def validate_selection(self, initializing=False):
         """
-        Validates selected versions and retrieves common books.
+        Validate selected versions and compute common books.
 
-        :param initializing: If True, skip validation logic
-        :type initializing: bool
-        :return: Tuple of (validated versions, common books)
-        :rtype: tuple[list[str], list[str]]
+        Args:
+            initializing (bool): If True, skip validation logic and return the raw selection.
+
+        Returns:
+            tuple[list[str], list[str]]: (validated_versions, common_books).
         """
         if initializing:
             return self.get_selected_versions(), self.get_common_books()
@@ -97,12 +106,13 @@ class VerseVersionHelper:
 
     def sort_versions(self, version_list):
         """
-        Sort the version list by internal sort order and prefix rules.
+        Sort a list of version keys using the configured sort order and prefix rules.
 
-        :param version_list: List of version keys to sort
-        :type version_list: list[str]
-        :return: Sorted list of version keys
-        :rtype: list[str]
+        Args:
+            version_list (list[str]): List of version keys to sort.
+
+        Returns:
+            list[str]: Sorted list of version keys.
         """
         # Sort by the global sort key first
         version_list.sort(key=self.bible_data.get_sort_key())

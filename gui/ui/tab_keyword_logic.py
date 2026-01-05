@@ -8,7 +8,7 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Handles the keyword search, result display, and verse saving logic for the TabKeyword UI.
+Handles the keyword search, result display, and verse saving logic for the :class:`gui.ui.tab_keyword.TabKeyword` UI.
 """
 
 from PySide6.QtCore import Qt
@@ -22,31 +22,44 @@ from core.utils.utils_output import format_output, save_to_files
 from gui.utils.keyword_result_model import KeywordResultTableModel
 from gui.utils.keyword_highlight_delegate import KeywordHighlightDelegate
 
-
 class TabKeywordLogic:
     """
-    Provides backend logic for keyword-based search, result formatting,
-    and verse saving for the TabKeyword UI.
+    Backend logic for keyword-based Bible search and verse export.
+
+    This class implements the non-UI logic used by the TabKeyword GUI tab,
+    including executing keyword searches, formatting results for display,
+    and exporting a selected verse to the configured overlay output file.
+
+    Attributes:
+        settings (dict): Application-level settings dictionary used for output paths
+            and persistence behavior.
+        tr (Callable[[str], str]): Translation function used to render localized
+            UI strings and message box text.
     """
 
     def __init__(self, settings, tr_func):
         """
-        Initializes the logic handler with settings and translation function.
+        Initialize the logic handler with settings and a translation function.
 
-        :param settings: Global application settings
-        :type settings: dict
-        :param tr_func: Translation function for localized strings
-        :type tr_func: Callable[[str], str]
+        Args:
+            settings (dict): Global application settings.
+            tr_func (Callable[[str], str]): Translation function for localized strings.
         """
         self.settings = settings
         self.tr = tr_func
 
     def run_search(self, parent):
         """
-        Performs a keyword search and updates the result table and summary.
+        Run a keyword search and update the UI with results and summary.
 
-        :param parent: The TabKeyword instance (UI context)
-        :type parent: QWidget
+        This reads the selected Bible version and keyword input from the parent UI,
+        executes the search via BibleKeywordSearcher, and then updates the table and
+        summary views through the parent's update methods. User-facing warnings are
+        shown when input is missing or no results are found.
+
+        Args:
+            parent (QWidget): The TabKeyword UI instance providing the search inputs
+                and output widgets.
         """
         log_debug("[TabKeyword] run_search started")
         version = parent.version_box.currentText()
@@ -77,10 +90,19 @@ class TabKeywordLogic:
 
     def save_selected_verse(self, parent):
         """
-        Saves the currently selected verse in the result table to verse_output.txt.
+        Save the currently selected verse from the result table to the overlay output.
 
-        :param parent: The TabKeyword instance
-        :type parent: QWidget
+        This extracts the selected reference from the result table, resolves/normalizes
+        the book name, retrieves the verse text from the selected version, formats the
+        output text, and writes it using the project's output-saving helper.
+
+        Args:
+            parent (QWidget): The TabKeyword UI instance providing table selection,
+                Bible data access, language context, and settings.
+
+        Raises:
+            Exception: Any error raised by the output writer is caught and presented
+            to the user via a critical dialog.
         """
         log_debug("[TabKeyword] save_selected_verse called")
 
@@ -149,21 +171,27 @@ class TabKeywordLogic:
 
     def clear_outputs(self, parent):
         """
-        Clears the verse output file by writing an empty string.
+        Clear the verse output destination.
 
-        :param parent: TabKeyword instance
-        :type parent: QWidget
+        This writes an empty string to the configured output path(s), effectively
+        clearing any overlay text that is being polled or displayed.
+
+        Args:
+            parent (QWidget): The TabKeyword UI instance providing settings.
         """
         save_to_files("", parent.settings)
 
     def update_table(self, parent, results):
         """
-        Sets the result table model and installs a keyword highlight delegate.
+        Update the result table model and install keyword highlighting.
 
-        :param parent: TabKeyword instance
-        :type parent: QWidget
-        :param results: List of verse entry dictionaries
-        :type results: list[dict]
+        This constructs a KeywordResultTableModel from the search results, attaches it
+        to the UI table, and applies a KeywordHighlightDelegate for visual emphasis of
+        matched terms.
+
+        Args:
+            parent (QWidget): The TabKeyword UI instance containing the table widget.
+            results (list[dict]): List of verse entry dictionaries returned by the searcher.
         """
         model = KeywordResultTableModel(results, parent.bible_data, parent.current_language, parent.tr)
         parent.table.setModel(model)
@@ -178,11 +206,10 @@ class TabKeywordLogic:
 
     def update_summary(self, parent, counts):
         """
-        Updates the summary box with the count of each keyword found.
+        Update the summary box with per-keyword occurrence counts.
 
-        :param parent: TabKeyword instance
-        :type parent: QWidget
-        :param counts: Dictionary mapping keyword → count
-        :type counts: dict[str, int]
+        Args:
+            parent (QWidget): The TabKeyword UI instance containing the summary widget.
+            counts (dict[str, int]): Mapping from keyword to occurrence count.
         """
         parent.summary_box.setPlainText("\n".join(f"{k}: {v}" for k, v in counts.items()))

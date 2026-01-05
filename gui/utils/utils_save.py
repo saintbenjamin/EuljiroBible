@@ -18,11 +18,27 @@ from gui.utils.logger import handle_exception
 
 def save_user_settings(app, win):
     """
-    Saves user settings at exit from the GUI state.
+    Persist user settings when the GUI application exits.
+
+    This function collects relevant runtime UI state from the main window and
+    writes it to the settings store. It is typically invoked during application
+    shutdown to ensure that the next launch restores the user’s most recent context.
+
+    Captured settings include:
+
+    - Application font family and size
+    - Last selected Bible versions
+    - Last selected book, chapter, and verse
+    - Current dark mode state
 
     Args:
-        app (QApplication): The application instance.
-        win (QMainWindow): The main window containing tab state.
+        app (QApplication): Active QApplication instance used to query global font
+            and theme (dark mode) state.
+        win (QMainWindow): Main application window containing the tab widgets
+            and verse-selection UI.
+
+    Returns:
+        None
     """
     if not win:
         return

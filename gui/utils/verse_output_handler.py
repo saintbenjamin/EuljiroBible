@@ -21,32 +21,44 @@ class VerseOutputHandler:
     """
     Manages displaying and saving Bible verse text in the GUI.
 
-    :param display_box: QTextEdit widget where verses will be shown
-    :type display_box: QTextEdit
-    :param settings: Application settings dictionary
-    :type settings: dict
+    This class is responsible for:
+
+    - Rendering formatted Bible verse text into a QTextEdit widget.
+    - Applying consistent paragraph formatting (e.g. line spacing).
+    - Delegating persistence of verse output to file-based utilities.
+
+    Attributes:
+        display_box (QTextEdit):
+            Text edit widget used to display verse output to the user.
+        settings (dict):
+            Application settings dictionary. This typically includes output
+            paths and related configuration used when saving verse text.
     """
 
     def __init__(self, display_box: QTextEdit, settings: dict):
         """
-        Initialize the handler with the display box and configuration.
+        Initialize the handler with the display widget and configuration.
 
-        :param display_box: The QTextEdit area for displaying verse output
-        :type display_box: QTextEdit
-        :param settings: Dictionary containing application settings (e.g. output path)
-        :type settings: dict
+        Args:
+            display_box (QTextEdit):
+                QTextEdit area for displaying verse output.
+            settings (dict):
+                Dictionary containing application settings
+                (e.g. output paths, polling options).
         """
         self.display_box = display_box
         self.settings = settings
 
     def apply_output_text(self, text: str):
         """
-        Display the given verse text in the output box with proper formatting.
+        Display the given verse text in the output box with formatting applied.
 
-        Applies a block format with approximately 150% line spacing.
+        The text is rendered into the QTextEdit and a block format is applied
+        to enforce approximately 150% line spacing across the entire document.
 
-        :param text: The verse string to render
-        :type text: str
+        Args:
+            text (str):
+                Verse text to render in the output box.
         """
         # Insert the formatted verse text into the text box
         self.display_box.setText(text)
@@ -61,10 +73,14 @@ class VerseOutputHandler:
 
     def save_verse(self, formatted_text: str):
         """
-        Save the formatted verse text to the file(s) specified in settings.
+        Save the formatted verse text to output file(s).
 
-        :param formatted_text: The string of formatted verses
-        :type formatted_text: str
+        If the provided text is empty or None, it is treated as an empty string.
+        Actual file writing is delegated to the output utility layer.
+
+        Args:
+            formatted_text (str):
+                Formatted verse text to be saved.
         """
         # If text is empty or None, treat it as empty string
         if not formatted_text:

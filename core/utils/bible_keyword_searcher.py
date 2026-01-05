@@ -8,7 +8,19 @@
 :E-mail: euljirochurch [at] G.M.A.I.L. (replace [at] with @ and G.M.A.I.L as you understood.)
 :License: MIT License with Attribution Requirement (see LICENSE file for details); Copyright (c) 2025 The Eulji-ro Presbyterian Church.
 
-Performs keyword-based search on Bible text files for EuljiroBible.
+Performs keyword-based search on Bible text files for EuljiroBible/EuljiroWorship.
+
+This module provides lightweight, in-memory keyword search functionality
+over a single Bible version JSON file. It is designed for fast interactive
+search in both CLI and GUI contexts.
+
+Supported search modes include:
+
+- Word-based AND search
+- Whitespace-insensitive (compact) substring search
+
+Search results include both raw verse text and HTML-highlighted text
+for immediate display use.
 """
 
 import os
@@ -18,15 +30,55 @@ from core.config import paths
 
 class BibleKeywordSearcher:
     """
-    Provides keyword search functionality for Bible verses.
-    Searches the full text of the selected Bible version.
+    Keyword-based Bible verse search engine.
+
+    This class loads a single Bible version into memory and provides multiple
+    keyword-based search strategies over verse text, including word-based AND
+    search and whitespace-insensitive (compact) substring search.
+
+    Search results are returned as structured dictionaries containing verse
+    location metadata and both raw and highlighted text, making them suitable
+    for direct rendering in GUI table models, delegates, or CLI output.
+
+    Attributes:
+        version (str):
+            Bible version key currently loaded (e.g., "개역개정", "NKRV").
+            This corresponds to the JSON filename without extension.
+
+        data (dict):
+            Parsed Bible text data loaded from ``<version>.json``.
+            Structure is typically:
+            ``data[book][chapter][verse] = verse_text``.
+
+        name_map (dict):
+            Parsed content of ``standard_book.json``.
+            Used to resolve canonical or localized book names when needed
+            by UI or higher-level logic.
+
+    Note:
+        - The Bible data for the selected version is fully loaded at initialization time (not lazily).
+        - Highlighting is performed using simple HTML ``<span>`` tags, assuming downstream renderers support HTML (e.g., QTextDocument).
+        - This class is used by both GUI (TabKeyword) and CLI search paths.
     """
 
     def __init__(self, version: str = "개역개정"):
         """
-        Load Bible data for the given version.
+        Initialize the keyword searcher with a specific Bible version.
 
-        :param version: Bible version name (without .json)
+        The corresponding Bible JSON file is loaded into memory at
+        initialization time.
+
+        Args:
+            version (str):
+                Bible version name without file extension
+                (e.g., "개역개정", "NKRV").
+
+        Returns:
+            None
+
+        Raises:
+            FileNotFoundError:
+                If the specified Bible version file does not exist.
         """
         self.version = version
         filepath = os.path.join(paths.BIBLE_DATA_DIR, f"{version}.json")
@@ -42,8 +94,26 @@ class BibleKeywordSearcher:
 
     def search_compact_string(self, keyword: str, limit: int = 100) -> list[dict]:
         """
-        Search using compressed (whitespace-removed) keyword.
-        Matches continuous strings regardless of spacing.
+        Perform whitespace-insensitive substring search.
+
+        All whitespace is removed from both the keyword and verse text
+        before matching, allowing detection of continuous phrases
+        regardless of spacing differences.
+
+        Args:
+            keyword (str):
+                Input search string.
+            limit (int, optional):
+                Maximum number of results to return. Defaults to 100.
+
+        Returns:
+            list[dict]:
+                List of matching verse dictionaries, each containing:
+                - book
+                - chapter
+                - verse
+                - text
+                - highlighted
         """
         results = []
         stripped = keyword.strip()
@@ -74,8 +144,20 @@ class BibleKeywordSearcher:
 
     def search_wordwise_and(self, keyword: str, limit: int = 100) -> list[dict]:
         """
-        Search using word-based AND logic.
-        All words must be present in the verse text.
+        Perform word-based AND search.
+
+        All whitespace-separated words in the keyword must appear
+        somewhere in the verse text for a match to occur.
+
+        Args:
+            keyword (str):
+                Space-separated search terms.
+            limit (int, optional):
+                Maximum number of results to return. Defaults to 100.
+
+        Returns:
+            list[dict]:
+                List of matching verse dictionaries with highlighted terms.
         """
         results = []
         words = keyword.strip().split()
@@ -100,11 +182,24 @@ class BibleKeywordSearcher:
     
     def search(self, keyword: str, limit: int = 100, mode: str = "and") -> list[dict]:
         """
-        Unified search interface.
+        Unified keyword search interface.
 
-        :param keyword: Input keyword(s)
-        :param limit: Max results
-        :param mode: 'and' (default) or 'compact'
+        This method dispatches to the appropriate search strategy
+        based on the selected mode.
+
+        Args:
+            keyword (str):
+                Input keyword or phrase.
+            limit (int, optional):
+                Maximum number of results to return.
+            mode (str, optional):
+                Search mode selector.
+                - "and": word-based AND search (default)
+                - "compact": whitespace-insensitive substring search
+
+        Returns:
+            list[dict]:
+                Search result list.
         """
         if mode == "compact":
             return self.search_compact_string(keyword, limit)
@@ -112,13 +207,20 @@ class BibleKeywordSearcher:
 
     def count_keywords(self, results: list[dict], keywords: list[str]) -> dict[str, int]:
         """
-        Count total occurrences of each keyword across all result texts.
+        Count total occurrences of each keyword across search results.
 
-        This version performs full counting using regex (case-insensitive).
+        This method performs full regex-based counting (case-insensitive)
+        over the raw verse text of each search result.
 
-        :param results: List of verse dictionaries (search result)
-        :param keywords: List of raw keywords to count
-        :return: Dictionary mapping each keyword to count
+        Args:
+            results (list[dict]):
+                List of verse dictionaries returned from a search.
+            keywords (list[str]):
+                List of keywords to count.
+
+        Returns:
+            dict[str, int]:
+                Mapping of keyword -> total occurrence count.
         """
         counts = {w: 0 for w in keywords}
         for r in results:

@@ -19,27 +19,31 @@ from core.utils.logger import log_debug
 from gui.ui.common import create_checkbox
 from gui.utils.logger import log_error_with_dialog
 
-
 class TabVerseSelectionManager:
     """
-    Manages the logic for updating version checkboxes, summary label,
-    and dropdowns for book and chapter selection in the TabVerse UI.
+    Selection and dropdown manager for the TabVerse UI.
 
-    :param bible_data: Instance of BibleDataLoader
-    :type bible_data: BibleDataLoader
-    :param version_helper: Helper for version selection and validation
-    :type version_helper: VerseVersionHelper
-    :param tr_func: Translation function (usually `self.tr`)
-    :type tr_func: Callable[[str], str]
+    This class manages version checkbox layout and selection state, the version
+    summary label, and the book/chapter dropdown behavior for the verse tab. It
+    coordinates with VerseVersionHelper to validate version selections and compute
+    the set of common books available across selected versions.
+
+    Attributes:
+        bible_data (BibleDataLoader): Bible data loader instance used to resolve
+            standard book names and verse structures.
+        version_helper (VerseVersionHelper): Helper used to read selected versions,
+            validate selections, and compute common books.
+        tr (Callable[[str], str]): Translation function used for localized UI messages.
     """
 
     def __init__(self, bible_data, version_helper, tr_func):
         """
-        Initialize the manager with data and helpers.
+        Initialize the selection manager with Bible data and helper dependencies.
 
-        :param bible_data: Bible data loader
-        :param version_helper: Instance for managing selected versions
-        :param tr_func: Translation function
+        Args:
+            bible_data (BibleDataLoader): Bible data loader instance.
+            version_helper (VerseVersionHelper): Helper used to manage selected versions.
+            tr_func (Callable[[str], str]): Translation function for localized UI strings.
         """
         self.bible_data = bible_data
         self.version_helper = version_helper
@@ -47,13 +51,17 @@ class TabVerseSelectionManager:
 
     def create_version_checkbox(self, parent, version_name):
         """
-        Creates a checkbox for a given Bible version.
+        Create a version selection checkbox for a given Bible version.
 
-        :param parent: Parent widget with access to bible_data and update method
-        :param version_name: Full name of the version
-        :type version_name: str
-        :return: Configured QCheckBox
-        :rtype: QCheckBox
+        The checkbox label uses the GUI alias mapping when available, while the
+        underlying version key is stored on the widget as `version_key`.
+
+        Args:
+            parent (QWidget): Parent UI instance used to access bible_data and update callbacks.
+            version_name (str): Full version identifier.
+
+        Returns:
+            QCheckBox: Configured checkbox instance.
         """
         label = parent.bible_data.aliases_version.get(version_name, version_name)
         checkbox = create_checkbox(label, callback=lambda _: self.update_version_summary(parent))
@@ -64,9 +72,14 @@ class TabVerseSelectionManager:
 
     def update_grid_layout(self, parent):
         """
-        Updates the layout grid for version checkboxes based on platform-specific width.
+        Reflow the version checkbox grid layout based on the current viewport width.
 
-        :param parent: Parent widget with scroll and layout references
+        This recomputes the number of columns from the available width and places
+        checkboxes into the grid accordingly. Platform-specific width ratios are used
+        to account for rendering/scrollbar differences.
+
+        Args:
+            parent (QWidget): TabVerse instance containing the version scroll area and grid layout.
         """
         width = parent.version_scroll.viewport().width()
 
@@ -85,9 +98,14 @@ class TabVerseSelectionManager:
 
     def update_version_summary(self, parent):
         """
-        Updates the label summarizing selected versions and repopulates book dropdown.
+        Update the selected-version summary label and refresh dependent dropdowns.
 
-        :param parent: TabVerse instance with summary label and dropdown widgets
+        If no versions are selected, this clears book/chapter/verse inputs and shows a
+        warning dialog. Otherwise, it updates the summary label (alias vs full name)
+        and refreshes the book dropdown to reflect books common to all selected versions.
+
+        Args:
+            parent (QWidget): TabVerse instance containing summary label and dropdown widgets.
         """
         if getattr(parent, "initializing", False):
             return
@@ -127,11 +145,13 @@ class TabVerseSelectionManager:
 
     def populate_book_dropdown(self, parent, lang_code=None):
         """
-        Populates the book dropdown with all standard books.
+        Populate the book dropdown with the full standard book list.
 
-        :param parent: TabVerse instance with combo box
-        :param lang_code: Language code ('ko' or 'en')
-        :type lang_code: str | None
+        This is used to initialize the book dropdown independent of version filtering.
+
+        Args:
+            parent (QWidget): TabVerse instance containing the book combo box.
+            lang_code (str | None): Language code used for display names (default: "ko").
         """
         if lang_code is None:
             lang_code = "ko"
@@ -148,10 +168,16 @@ class TabVerseSelectionManager:
 
     def update_book_dropdown(self, parent, lang_code=None):
         """
-        Updates the book dropdown to show only those available in all selected versions.
+        Update the book dropdown to include only books common to all selected versions.
 
-        :param parent: TabVerse instance with input fields and book combo box
-        :param lang_code: Language code ('ko' or 'en')
+        This validates the selected versions, computes the intersection of supported
+        books, updates the dropdown entries accordingly, and attempts to restore any
+        previous book/chapter/verse selections when possible.
+
+        Args:
+            parent (QWidget): TabVerse instance containing book/chapter/verse input widgets.
+            lang_code (str | None): Language code used for display names. If not provided,
+                it is inferred from the current translation context.
         """
         if getattr(parent, "initializing", False):
             return
@@ -226,9 +252,14 @@ class TabVerseSelectionManager:
 
     def update_chapter_dropdown(self, parent):
         """
-        Updates the chapter dropdown to reflect the selected book and version.
+        Update the chapter dropdown for the currently selected book.
 
-        :param parent: TabVerse instance with combo boxes and data access
+        This resolves the internal book key, reads available chapter indices from the
+        selected version's verse structure, and fills the chapter combo box with a
+        1..max range.
+
+        Args:
+            parent (QWidget): TabVerse instance containing the book and chapter widgets.
         """
         selected_versions = parent.version_helper.get_selected_versions()
         if not selected_versions:
