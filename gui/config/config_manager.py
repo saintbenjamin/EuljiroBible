@@ -35,7 +35,6 @@ from core.config import paths
 from core.utils.logger import log_debug
 from gui.utils.logger import log_error_with_dialog
 
-
 # Default fallback settings
 DEFAULT_SETTINGS = {
     "last_language": "en",
@@ -59,7 +58,6 @@ DEFAULT_SETTINGS = {
     "poll_enabled": False,
     "poll_interval": 500
 }
-
 
 class ConfigManager:
     """
