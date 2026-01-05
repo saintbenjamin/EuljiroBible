@@ -54,8 +54,8 @@ def load_application_settings(app):
     size, and weight to the given ``QApplication`` instance.
 
     Failure behavior:
-    - If loading or parsing fails, a GUI-safe error dialog is shown via
-      ``handle_exception`` and the application continues (Qt default font remains).
+
+    - If loading or parsing fails, a GUI-safe error dialog is shown via ``handle_exception`` and the application continues (Qt default font remains).
 
     Args:
         app (QApplication): The QApplication instance to configure.

@@ -510,8 +510,7 @@ def run_bible_command(args):
         None
 
     Note:
-        - This function assumes at least one valid version alias is supplied when
-        verse lookup is attempted. 
+        - This function assumes at least one valid version alias is supplied when verse lookup is attempted. 
         - If no version is found, callers should see usage.
     """
     if handle_cli_metadata(args):
