@@ -28,7 +28,7 @@ data_path = paths.BIBLE_DATA_DIR
 
 def handle_cli_metadata(args):
     """
-    Handle CLI metadata options like --help, --version, and --about.
+    Handle CLI metadata options like ``--help``, ``--version``, and ``--about``.
 
     Returns:
         bool: True if metadata was handled and command should exit.
@@ -218,6 +218,33 @@ def parse_and_validate_reference(remaining):
     return parsed
 
 def detect_lang_code_from_aliases(versions, alias_map):
+    """
+    Detect a likely language code from user-supplied version aliases.
+
+    This is a lightweight heuristic for deciding whether the output should be
+    treated as a right-to-left (RTL) language. It scans each version token
+    (case-insensitive) and matches it against a small keyword list per language.
+
+    Note:
+        - ``alias_map`` is currently unused, but kept in the signature for
+          compatibility with existing call sites and potential future expansion
+          (e.g., mapping canonical version names to metadata).
+        - If no RTL-related keyword is found, this defaults to Korean ("ko").
+
+    Args:
+        versions (list[str]): Version tokens or aliases provided by the user.
+            Example: ["NKRV", "WLC"].
+        alias_map (dict): Version alias mapping (reserved for future use).
+
+    Returns:
+        str: Detected language code. One of:
+
+            - "he" (Hebrew)
+            - "ar" (Arabic)
+            - "fa" (Persian/Farsi)
+            - "ur" (Urdu)
+            - "ko" (default fallback)
+    """
     rtl_map = {
         "he": ["히브리어", "hebrew", "heb", "wlc", "mhb"],
         "ar": ["아랍어", "arabic", "ar", "svd"],
@@ -350,18 +377,18 @@ def run_bible_command(args):
     """
     Main CLI handler for parsing and executing Bible verse search commands.
 
-    Args:
-        args (list[str]): Command-line arguments excluding the script name.
-
-    Examples:
-        $ bible NKRV John 3:16
-        $ bible NKRV NIV John 3
-        $ bible NKRV
+    Example:
+        - ``$ bible NKRV John 3:16``
+        - ``$ bible NKRV NIV John 3``
+        - ``$ bible NKRV``
 
     Behavior:
         - Prints usage/help if no args.
         - Lists books if only version and book given.
         - Shows verse(s) if full reference is given.
+
+    Args:
+        args (list[str]): Command-line arguments excluding the script name.
     """
     if handle_cli_metadata(args):
         return
@@ -394,7 +421,8 @@ def run_search_command(args):
     """
     CLI keyword search command.
 
-    Usage:
+    Usage::
+
         bible search <version> <keyword1> [keyword2 ...]
     """
 
