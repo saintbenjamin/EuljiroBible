@@ -47,6 +47,52 @@ Python 3.10 이상이 필요합니다.
 pip install -r requirements.txt
 ```
 
+위 명령은 주로 GUI 실행에 필요한 의존성 설치용입니다.  
+The command above mainly installs dependencies required for the GUI.
+
+---
+
+## CLI 설치 방법 | Installing the CLI
+
+아직 PyPI에 배포하지 않았더라도, 저장소를 클론한 뒤 프로젝트 루트에서 아래처럼 설치하면
+`bible` 명령어를 바로 사용할 수 있습니다:
+
+Even if the package has not been published to PyPI yet, you can still enable the
+`bible` command locally by installing the project from the cloned repository root:
+
+```bash
+pip install -e .
+```
+
+이 설치는 `pyproject.toml`에 정의된 CLI 엔트리포인트를 등록하므로,
+설치 후에는 어디서든 `bible` 명령으로 실행할 수 있습니다.
+
+This installs the CLI entry point defined in `pyproject.toml`, so after installation
+you can run the `bible` command from anywhere.
+
+예시:
+
+```bash
+cd /path/to/EuljiroBible
+pip install -e .
+
+bible --help
+bible NKRV John 3:16
+bible search NKRV 믿음 은혜
+```
+
+만약 macOS/Homebrew Python 등에서 `externally-managed-environment` 오류가 나면,
+가상환경을 만든 뒤 같은 명령을 실행하면 됩니다:
+
+If you see an `externally-managed-environment` error on environments such as
+macOS/Homebrew Python, create a virtual environment first and then run the same install:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
 ---
 
 ## GUI 실행 방법 | Launching the GUI
