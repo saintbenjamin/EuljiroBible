@@ -220,6 +220,31 @@ def show_search_usage(version_catalog):
     _print_available_versions(version_catalog)
 
 
+def handle_search_version_only(version, version_label_map, version_catalog):
+    """
+    Handle the case where only the version is specified for keyword search.
+
+    This keeps the response search-specific instead of falling back to
+    verse-lookup guidance.
+
+    Args:
+        version (str):
+            Full Bible version key.
+        version_label_map (dict):
+            Full version -> CLI label mapping used for user-facing text.
+        version_catalog (list[dict]):
+            Ordered catalog of available versions for usage display.
+
+    Returns:
+        None
+    """
+    print(f"EuljiroBible v{APP_VERSION} (CLI interface) - Bible Keyword Search")
+    print("For more information, use: --about or --help\n")
+    print("Usage: bible search <version> <keyword1> [keyword2 ...]\n")
+    print(f"[INFO] Selected version: {version_label_map.get(version, version)}")
+    print("[INFO] Please enter one or more keywords separated by spaces.")
+
+
 def load_cli_version_catalog():
     """
     Build the CLI version catalog from the actual Bible data directory.
@@ -644,14 +669,24 @@ def run_search_command(args):
     if handle_search_metadata(args):
         return
 
-    version_catalog, token_to_version, _ = load_cli_version_catalog()
+    version_catalog, token_to_version, version_label_map = load_cli_version_catalog()
 
-    if len(args) < 2:
+    if len(args) == 0:
         show_search_usage(version_catalog)
         return
 
     version_token = args[0]
     keywords = args[1:]
+
+    if len(args) == 1:
+        full_version = token_to_version.get(version_token)
+        if not full_version:
+            print(f"[ERROR] Unknown version: '{version_token}'")
+            show_search_usage(version_catalog)
+            return
+
+        handle_search_version_only(full_version, version_label_map, version_catalog)
+        return
 
     full_version = resolve_search_version(version_token, token_to_version, keywords)
     if not full_version:
