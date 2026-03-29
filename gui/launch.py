@@ -54,10 +54,16 @@ def launch(app, saved_versions, settings, app_version):
     """
     from gui.ui.window_main import WindowMain
 
-    # Get all version strings (sorted and alias-resolved)
+    # Get all version strings from actual data files
     version_list = refresh_full_version_list()
+    available_versions = set(version_list)
 
-    saved_versions = settings.get("last_versions", ["대한민국 개역개정 (1998)"])
+    saved_versions = [
+        version for version in settings.get("last_versions", [])
+        if version in available_versions
+    ]
+    if not saved_versions and version_list:
+        saved_versions = [version_list[0]]
 
     # Load only versions used last session (lazy load)
     bible_loader = BibleDataLoader()
@@ -124,10 +130,6 @@ def launch(app, saved_versions, settings, app_version):
 
     tab_verse.chapter_input.setCurrentText(str(settings.get("last_chapter", 1)))
     tab_verse.verse_input.setText(settings.get("last_verse", ""))
-
-    saved_versions = settings.get("last_versions", [])
-    if not saved_versions:
-        saved_versions = ["대한민국 개역개정 (1998)"]
 
     # Allow change-tracking again
     tab_verse.initializing = False

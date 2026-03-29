@@ -62,7 +62,7 @@ class TabKeywordLogic:
                 and output widgets.
         """
         log_debug("[TabKeyword] run_search started")
-        version = parent.version_box.currentText()
+        version = parent.version_box.currentData() or parent.version_box.currentText()
         keywords = parent.keyword_input.text().strip().split()
 
         if not keywords or all(k == "" for k in keywords):
@@ -127,7 +127,7 @@ class TabKeywordLogic:
             return
 
         normalized = book.replace(" ", "")
-        version = parent.version_box.currentText()
+        version = parent.version_box.currentData() or parent.version_box.currentText()
         verses = parent.bible_data.get_verses(version)
 
         # Normalize book name if needed

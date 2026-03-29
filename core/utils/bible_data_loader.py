@@ -149,6 +149,34 @@ class BibleDataLoader:
         verses = self.get_verses(version)
         return list(verses.keys()) if verses else []
 
+    def get_available_versions(self):
+        """
+        Return all Bible version keys that actually exist under the text directory.
+
+        This method inspects the Bible text directory directly and derives
+        version keys from the available ``*.json`` filenames. It is used when
+        the application needs the true list of install-time/runtime-available
+        Bible versions instead of relying on alias metadata files.
+
+        Returns:
+            list[str]:
+                Sorted list of version keys derived from ``<text_dir>/*.json``.
+
+        Note:
+            Failures while scanning the directory are logged and an empty list
+            is returned so callers can fail gracefully.
+        """
+        try:
+            files = [
+                fname[:-5]
+                for fname in os.listdir(self.text_dir)
+                if fname.endswith(".json")
+            ]
+            return sorted(set(files), key=self.get_sort_key())
+        except Exception as e:
+            log_error(f"[BibleDataLoader] Failed to scan versions in '{self.text_dir}': {e}")
+            return []
+
     def _load_json(self, file_path):
         """
         Safely load a JSON file and return its contents.
@@ -386,6 +414,34 @@ class BibleDataLoader:
             else:
                 alias_map[k] = v
         return alias_map
+
+    def get_version_display_name(self, version_key, lang_code="ko") -> str:
+        """
+        Return a user-facing display label for a Bible version.
+
+        The display label prefers ``aliases_version.json`` when available and
+        falls back to the raw version key (usually the source JSON filename
+        without extension).
+
+        Args:
+            version_key (str):
+                Bible version key / filename stem.
+            lang_code (str):
+                Language code used when alias entries are nested dictionaries.
+
+        Returns:
+            str:
+                Alias label when available, otherwise ``version_key``.
+
+        Note:
+            This method is intentionally display-oriented. It does not validate
+            whether the version exists on disk; callers should pair it with
+            :meth:`get_available_versions` when availability matters.
+        """
+        alias = self.aliases_version.get(version_key)
+        if isinstance(alias, dict):
+            return alias.get("aliases", {}).get(lang_code, version_key)
+        return alias or version_key
 
     # For compatibility with EuljiroWorship system    
     def get_verse(self, version: str, book: str, chapter: int, verse: int) -> str | None:

@@ -68,7 +68,14 @@ class TabKeywordUI:
 
         # 1. Version dropdown
         self.version_box = QComboBox()
-        self.version_box.addItems(version_list)
+        for version_key in version_list:
+            display_name = self.bible_data.get_version_display_name(version_key)
+            self.version_box.addItem(display_name, userData=version_key)
+            self.version_box.setItemData(
+                self.version_box.count() - 1,
+                version_key,
+                Qt.ToolTipRole
+            )
         version_row = QHBoxLayout()
         version_row.addWidget(self.version_box)
         layout.addLayout(version_row)
