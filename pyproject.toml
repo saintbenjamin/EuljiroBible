@@ -7,7 +7,7 @@ requires-python = ">=3.8"
 authors = [
     { name = "Benjamin Jaedon Choi", email = "euljirochurch@gmail.com" }
 ]
-license = "MIT"
+license = { text = "MIT" }
 
 [project.scripts]
 bible = "cli.cli_main:main"

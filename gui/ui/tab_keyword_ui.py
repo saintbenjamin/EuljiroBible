@@ -56,7 +56,7 @@ class TabKeywordUI:
         Initialize the UI layout and bind widget events.
 
         Args:
-            version_list (list[str]): List of available Bible version strings.
+            version_list (List[str]): List of available Bible version strings.
             get_polling_status (Callable[[], bool]): Callback for checking polling toggle state.
             get_always_show_setting (Callable[[], bool]): Callback for checking the
                 "always show buttons" setting.

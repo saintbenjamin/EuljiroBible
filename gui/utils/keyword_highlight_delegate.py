@@ -27,7 +27,7 @@ class KeywordHighlightDelegate(QStyledItemDelegate):
     - selected-row background rendering remains consistent with Qt styles
 
     Attributes:
-        keywords (list[str]): Keywords to highlight. Each keyword is highlighted by
+        keywords (List[str]): Keywords to highlight. Each keyword is highlighted by
             wrapping exact string matches in an HTML <span> with a colored style.
     """
 
@@ -36,11 +36,11 @@ class KeywordHighlightDelegate(QStyledItemDelegate):
         Initialize the delegate.
 
         Args:
-            keywords (list[str]): List of keywords to highlight.
+            keywords (List[str]): List of keywords to highlight.
             parent (QWidget | None): Optional parent widget.
         """
         super().__init__(parent)
-        self.keywords = keywords  # list[str]
+        self.keywords = keywords  # List[str]
 
     def paint(self, painter, option, index):
         """

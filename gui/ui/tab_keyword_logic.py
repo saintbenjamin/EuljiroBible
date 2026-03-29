@@ -191,7 +191,7 @@ class TabKeywordLogic:
 
         Args:
             parent (QWidget): The TabKeyword UI instance containing the table widget.
-            results (list[dict]): List of verse entry dictionaries returned by the searcher.
+            results (List[dict]): List of verse entry dictionaries returned by the searcher.
         """
         model = KeywordResultTableModel(results, parent.bible_data, parent.current_language, parent.tr)
         parent.table.setModel(model)
@@ -210,6 +210,6 @@ class TabKeywordLogic:
 
         Args:
             parent (QWidget): The TabKeyword UI instance containing the summary widget.
-            counts (dict[str, int]): Mapping from keyword to occurrence count.
+            counts (Dict[str, int]): Mapping from keyword to occurrence count.
         """
         parent.summary_box.setPlainText("\n".join(f"{k}: {v}" for k, v in counts.items()))

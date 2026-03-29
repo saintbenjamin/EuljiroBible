@@ -23,7 +23,7 @@ class KeywordResultTableModel(QAbstractTableModel):
         2) Verse text
 
     Attributes:
-        results (list[dict]): List of search result entries. Each entry is expected to
+        results (List[dict]): List of search result entries. Each entry is expected to
             contain at least: "book", "chapter", "verse", and "text".
         bible_data (BibleDataLoader): Data loader used to resolve localized/standard
             book display names.
@@ -36,7 +36,7 @@ class KeywordResultTableModel(QAbstractTableModel):
         Initialize the model with results and localization helpers.
 
         Args:
-            results (list[dict] | None): Search results to display. If None, an empty list is used.
+            results (List[dict] | None): Search results to display. If None, an empty list is used.
             bible_data (BibleDataLoader): Bible data loader used for book-name localization.
             current_language (str): Language code for localized book names (e.g., "ko", "en").
             tr (Callable[[str], str]): Translation function for localized header strings.

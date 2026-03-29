@@ -25,6 +25,7 @@ to minimize startup cost and disk I/O.
 
 import os
 import json
+from typing import Optional
 
 from core.config import paths
 from core.utils.logger import log_error
@@ -159,7 +160,7 @@ class BibleDataLoader:
         Bible versions instead of relying on alias metadata files.
 
         Returns:
-            list[str]:
+            List[str]:
                 Sorted list of version keys derived from ``<text_dir>/*.json``.
 
         Note:
@@ -444,7 +445,8 @@ class BibleDataLoader:
         return alias or version_key
 
     # For compatibility with EuljiroWorship system    
-    def get_verse(self, version: str, book: str, chapter: int, verse: int) -> str | None:
+    # def get_verse(self, version: str, book: str, chapter: int, verse: int) -> str | None:
+    def get_verse(self, version: str, book: str, chapter: int, verse: int) -> Optional[str]:
         """
         Retrieve a single verse from the loaded Bible data.
 

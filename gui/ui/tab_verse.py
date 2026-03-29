@@ -45,7 +45,7 @@ class TabVerse(QWidget, TabVerseUI):
         output_handler (VerseOutputHandler): Handler that applies formatted verse text
             to the main display widget and manages output formatting behavior.
         logic (TabVerseLogic): Backend verse display/export logic.
-        version_list (list[str]): Available Bible versions used to populate UI controls.
+        version_list (List[str]): Available Bible versions used to populate UI controls.
         current_language (str): Current UI language code (e.g., "ko", "en").
         formatted_verse_text (str): Most recently formatted verse output (used for Enter key flow).
         enter_state (int): Enter-key state machine (0 = ready to display, 1 = ready to export).
@@ -67,7 +67,7 @@ class TabVerse(QWidget, TabVerseUI):
         resetting Enter-state behavior when inputs change.
 
         Args:
-            version_list (list[str]): Available Bible version identifiers.
+            version_list (List[str]): Available Bible version identifiers.
             settings (dict): Loaded application settings.
             tr (Callable[[str], str]): Translation function for UI labels.
             get_polling_status (Callable[[], bool] | None): Optional callback that returns

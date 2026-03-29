@@ -12,6 +12,7 @@ Performs logic for managing selected Bible versions and computing shared books.
 """
 
 from PySide6.QtWidgets import QCheckBox, QLayoutItem
+
 from core.logic.verse_logic import (
     get_common_books_among_versions,
     validate_versions_and_books,
@@ -52,7 +53,7 @@ class VerseVersionHelper:
         Return a list of selected Bible versions based on checked checkboxes.
 
         Returns:
-            list[str]: List of selected version keys.
+            List[str]: List of selected version keys.
         """
         selected = []
         for i in range(self.version_layout.count()):
@@ -71,7 +72,7 @@ class VerseVersionHelper:
         Find books common to all selected Bible versions.
 
         Returns:
-            list[str]: List of book names common to all selected versions.
+            List[str]: List of book names common to all selected versions.
         """
         versions = self.get_selected_versions()
         if not versions:
@@ -94,7 +95,7 @@ class VerseVersionHelper:
             initializing (bool): If True, skip validation logic and return the raw selection.
 
         Returns:
-            tuple[list[str], list[str]]: (validated_versions, common_books).
+            Tuple[List[str], List[str]]: (validated_versions, common_books).
         """
         if initializing:
             return self.get_selected_versions(), self.get_common_books()
@@ -109,10 +110,10 @@ class VerseVersionHelper:
         Sort a list of version keys using the configured sort order and prefix rules.
 
         Args:
-            version_list (list[str]): List of version keys to sort.
+            version_list (List[str]): List of version keys to sort.
 
         Returns:
-            list[str]: Sorted list of version keys.
+            List[str]: Sorted list of version keys.
         """
         # Sort by the global sort key first
         version_list.sort(key=self.bible_data.get_sort_key())

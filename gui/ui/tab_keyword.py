@@ -48,7 +48,7 @@ class TabKeyword(QWidget, TabKeywordUI):
         Initialize the TabKeyword UI, logic backend, and Bible data.
 
         Args:
-            version_list (list[str]): Available Bible version list shown in the UI.
+            version_list (List[str]): Available Bible version list shown in the UI.
             settings (dict): Application-level settings.
             tr (Callable[[str], str]): Translation function for UI labels.
             get_polling_status (Callable[[], bool] | None): Optional callback to retrieve
@@ -124,7 +124,7 @@ class TabKeyword(QWidget, TabKeywordUI):
         Update the keyword result table with new entries.
 
         Args:
-            results (list[dict]): List of result dictionaries produced by the search backend.
+            results (List[dict]): List of result dictionaries produced by the search backend.
         """
         self.logic.update_table(self, results)
 
@@ -133,7 +133,7 @@ class TabKeyword(QWidget, TabKeywordUI):
         Update the summary box with keyword occurrence counts.
 
         Args:
-            counts (dict[str, int]): Mapping from keyword to occurrence count.
+            counts (Dict[str, int]): Mapping from keyword to occurrence count.
         """
         self.logic.update_summary(self, counts)
 

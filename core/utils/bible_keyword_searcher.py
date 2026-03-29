@@ -26,6 +26,8 @@ for immediate display use.
 import os
 import json
 import re
+from typing import List, Dict
+
 from core.config import paths
 
 class BibleKeywordSearcher:
@@ -92,7 +94,7 @@ class BibleKeywordSearcher:
         with open(paths.STANDARD_BOOK_FILE, "r", encoding="utf-8") as f:
             self.name_map = json.load(f)
 
-    def search_compact_string(self, keyword: str, limit: int = 100) -> list[dict]:
+    def search_compact_string(self, keyword: str, limit: int = 100) -> List[dict]:
         """
         Perform whitespace-insensitive substring search.
 
@@ -107,7 +109,7 @@ class BibleKeywordSearcher:
                 Maximum number of results to return. Defaults to 100.
 
         Returns:
-            list[dict]:
+            List[dict]:
                 List of matching verse dictionaries, each containing:
                 - book
                 - chapter
@@ -142,7 +144,7 @@ class BibleKeywordSearcher:
                             return results
         return results
 
-    def search_wordwise_and(self, keyword: str, limit: int = 100) -> list[dict]:
+    def search_wordwise_and(self, keyword: str, limit: int = 100) -> List[dict]:
         """
         Perform word-based AND search.
 
@@ -156,7 +158,7 @@ class BibleKeywordSearcher:
                 Maximum number of results to return. Defaults to 100.
 
         Returns:
-            list[dict]:
+            List[dict]:
                 List of matching verse dictionaries with highlighted terms.
         """
         results = []
@@ -180,7 +182,7 @@ class BibleKeywordSearcher:
                         })
         return results
     
-    def search(self, keyword: str, limit: int = 100, mode: str = "and") -> list[dict]:
+    def search(self, keyword: str, limit: int = 100, mode: str = "and") -> List[dict]:
         """
         Unified keyword search interface.
 
@@ -198,14 +200,14 @@ class BibleKeywordSearcher:
                 - "compact": whitespace-insensitive substring search
 
         Returns:
-            list[dict]:
+            List[dict]:
                 Search result list.
         """
         if mode == "compact":
             return self.search_compact_string(keyword, limit)
         return self.search_wordwise_and(keyword, limit)
 
-    def count_keywords(self, results: list[dict], keywords: list[str]) -> dict[str, int]:
+    def count_keywords(self, results: List[dict], keywords: List[str]) -> Dict[str, int]:
         """
         Count total occurrences of each keyword across search results.
 
@@ -213,13 +215,13 @@ class BibleKeywordSearcher:
         over the raw verse text of each search result.
 
         Args:
-            results (list[dict]):
+            results (List[dict]):
                 List of verse dictionaries returned from a search.
-            keywords (list[str]):
+            keywords (List[str]):
                 List of keywords to count.
 
         Returns:
-            dict[str, int]:
+            Dict[str, int]:
                 Mapping of keyword -> total occurrence count.
         """
         counts = {w: 0 for w in keywords}

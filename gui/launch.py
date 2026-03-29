@@ -40,7 +40,7 @@ def launch(app, saved_versions, settings, app_version):
     Args:
         app (QApplication):
             The running QApplication instance.
-        saved_versions (list[str] | None):
+        saved_versions (List[str] | None):
             Previously selected version identifiers (may be ignored if
             `settings["last_versions"]` exists).
         settings (dict):

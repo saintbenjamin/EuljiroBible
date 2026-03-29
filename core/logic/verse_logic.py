@@ -31,7 +31,7 @@ def parse_verse_range(verse_text, version, book, chapter, bible_data):
         bible_data (BibleDataLoader): Loader instance to resolve verse limits.
 
     Returns:
-        tuple[int, int]: (start_verse, end_verse)
+        Tuple[int, int]: (start_verse, end_verse)
 
     Raises:
         ValueError: If the format is invalid or range is reversed.
@@ -129,7 +129,7 @@ def get_common_books_among_versions(versions, get_verses_func, bible_data=None) 
         bible_data (BibleDataLoader): For canonical book order.
 
     Returns:
-        list[str]: List of book keys common to all versions.
+        List[str]: List of book keys common to all versions.
     """
     book_sets = []
     for version in versions:

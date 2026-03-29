@@ -82,7 +82,7 @@ class TabVerseUI:
         - A loading indicator overlay
 
         Args:
-            version_list (list[str]): List of Bible versions used to create checkboxes.
+            version_list (List[str]): List of Bible versions used to create checkboxes.
         """
         # Scrollable checkbox grid for Bible versions
         self.version_scroll = QScrollArea()

@@ -31,6 +31,7 @@ both CLI and GUI contexts.
 
 import re
 import json
+from typing import Optional
 
 from core.config import paths
 
@@ -44,7 +45,8 @@ except Exception as e:
     BOOK_ALIASES = {}
 # ─────────────────────────────────────────────
 
-def resolve_book_name(name: str, lang_map: dict = None, lang_code: str = "ko") -> str | None:
+# def resolve_book_name(name: str, lang_map: dict = None, lang_code: str = "ko") -> str | None:
+def resolve_book_name(name: str, lang_map: dict = None, lang_code: str = "ko") -> Optional[str]:
     """
     Resolve a user-provided book name to a canonical internal book ID.
 
@@ -123,7 +125,7 @@ def parse_reference(text: str):
             Raw reference string entered by the user.
 
     Returns:
-        tuple[str, int, tuple[int, int]] | None:
+        Tuple[str, int, Tuple[int, int]] | None:
             A tuple of ``(book_id, chapter_number, verse_range)``,
             where ``verse_range`` is ``(start, end)`` and ``end == -1``
             indicates the full chapter.

@@ -12,6 +12,7 @@ Provides utilities for working with available Bible versions.
 """
 
 import json
+
 from core.config import paths
 from core.utils.bible_data_loader import BibleDataLoader
 from core.utils.logger import log_error
@@ -26,7 +27,7 @@ def refresh_full_version_list():
         ['KJV', 'NIV', 'NKRV', 'RSV']
 
     Returns:
-        list[str]: Alphabetically or custom-ordered list of available Bible versions.
+        List[str]: Alphabetically or custom-ordered list of available Bible versions.
     """
     loader = BibleDataLoader()
 
@@ -53,7 +54,7 @@ def load_cli_alias_map():
         }
 
     Returns:
-        dict[str, str]:
+        Dict[str, str]:
             Mapping of ``version_key -> cli_token``.
 
     Note:
@@ -79,7 +80,7 @@ def build_cli_version_catalog():
     only to improve display labels and optional shorthand tokens.
 
     Returns:
-        tuple[list[dict[str, str]], dict[str, str], dict[str, str]]:
+        Tuple[List[Dict[str, str]], Dict[str, str], Dict[str, str]]:
             ``(entries, token_to_version, version_to_cli_label)`` where:
 
             - ``entries`` is an ordered list of catalog rows containing:

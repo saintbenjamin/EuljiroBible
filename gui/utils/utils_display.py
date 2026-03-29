@@ -27,7 +27,7 @@ def get_display_descriptions():
     for overlay or presentation output configuration.
 
     Returns:
-        list[str]: Display descriptions in the format
+        List[str]: Display descriptions in the format
             "Display N: WxH @ (X,Y)".
     """
     return [

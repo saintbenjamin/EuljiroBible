@@ -59,7 +59,7 @@ def handle_cli_metadata(args):
         - ``--about``: Print author and license information.
 
     Args:
-        args (list[str]): Raw CLI arguments *for the bible command* (excluding the script name).
+        args (List[str]): Raw CLI arguments *for the bible command* (excluding the script name).
 
     Returns:
         bool: ``True`` if a metadata option was handled and the command should exit,
@@ -106,7 +106,7 @@ def handle_search_metadata(args):
         - ``--about``: Print author and license information.
 
     Args:
-        args (list[str]): Raw CLI arguments for the ``search`` command.
+        args (List[str]): Raw CLI arguments for the ``search`` command.
 
     Returns:
         bool: ``True`` if a metadata option was handled and the command should exit,
@@ -155,7 +155,7 @@ def _print_available_versions(version_catalog):
     - Raw version key (filename stem) if no alias metadata exists
 
     Args:
-        version_catalog (list[dict]):
+        version_catalog (List[dict]):
             Catalog rows produced by
             :func:`core.utils.utils_version.build_cli_version_catalog`.
 
@@ -189,7 +189,7 @@ def show_usage_and_versions(version_catalog):
     Print general CLI usage for verse lookup and the currently available versions.
 
     Args:
-        version_catalog (list[dict]):
+        version_catalog (List[dict]):
             Ordered catalog of versions that actually exist under ``data/``.
 
     Returns:
@@ -207,7 +207,7 @@ def show_search_usage(version_catalog):
     Print CLI usage for keyword search and the currently available versions.
 
     Args:
-        version_catalog (list[dict]):
+        version_catalog (List[dict]):
             Ordered catalog of versions that actually exist under ``data/``.
 
     Returns:
@@ -230,7 +230,7 @@ def load_cli_version_catalog():
     ``data/``.
 
     Returns:
-        tuple[list[dict], dict, dict]: ``(version_catalog, token_to_version, version_label_map)`` where:
+        Tuple[List[dict], dict, dict]: ``(version_catalog, token_to_version, version_label_map)`` where:
 
         - ``version_catalog`` is an ordered list of version entries for display.
         - ``token_to_version`` maps accepted CLI input tokens to full version keys.
@@ -255,12 +255,12 @@ def parse_versions_from_args(args, token_to_version):
         - Treat the remaining tokens as the Bible reference portion.
 
     Args:
-        args (list[str]): Raw CLI arguments.
+        args (List[str]): Raw CLI arguments.
         token_to_version (dict):
             Mapping of accepted CLI tokens to full version keys.
 
     Returns:
-        tuple[list[str], list[str]]: ``(versions, remaining_args)`` where:
+        Tuple[List[str], List[str]]: ``(versions, remaining_args)`` where:
 
         - ``versions`` is a list of full version keys resolved from the input.
         - ``remaining_args`` is the remainder of tokens after version parsing.
@@ -296,7 +296,7 @@ def resolve_search_version(version_token, token_to_version, keywords):
             CLI token provided by the user.
         token_to_version (dict):
             Mapping of accepted CLI tokens to full version keys.
-        keywords (list[str]):
+        keywords (List[str]):
             Remaining keyword tokens supplied by the user.
 
     Returns:
@@ -328,7 +328,7 @@ def parse_and_validate_reference(remaining):
     uses :func:`core.utils.bible_parser.parse_reference` for parsing.
 
     Args:
-        remaining (list[str]):
+        remaining (List[str]):
             Tokens representing the reference portion.
 
     Returns:
@@ -363,7 +363,7 @@ def detect_lang_code_from_aliases(versions, _version_label_map):
         signature stability and possible future metadata-based detection.
 
     Args:
-        versions (list[str]):
+        versions (List[str]):
             Full version names selected for output.
         _version_label_map (dict):
             Reserved for future use.
@@ -400,13 +400,13 @@ def run_display_logic(versions, book, chapter, verse_range, version_label_map):
        sending formatted output to stdout.
 
     Args:
-        versions (list[str]):
+        versions (List[str]):
             Full version names to load and display.
         book (str):
             Canonical book key expected by :class:`BibleDataLoader`.
         chapter (int):
             Chapter number.
-        verse_range (tuple[int, int]):
+        verse_range (Tuple[int, int]):
             Verse range ``(start, end)``.
         version_label_map (dict):
             Full version -> CLI label mapping used in formatted output.
@@ -459,7 +459,7 @@ def run_keyword_search(full_version, keywords):
     Args:
         full_version (str):
             Full Bible version key.
-        keywords (list[str]):
+        keywords (List[str]):
             Keywords to search. They are joined with spaces before searching.
 
     Returns:
@@ -570,7 +570,7 @@ def run_bible_command(args):
     - If a full reference is provided, prints formatted verse output via shared logic.
 
     Args:
-        args (list[str]):
+        args (List[str]):
             Command-line arguments excluding the script name and excluding the
             ``bible`` token.
 
@@ -634,7 +634,7 @@ def run_search_command(args):
     - Runs keyword search and prints matches and keyword frequencies.
 
     Args:
-        args (list[str]):
+        args (List[str]):
             Command-line arguments excluding the script name and excluding the
             ``search`` token.
 
